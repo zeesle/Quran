@@ -1,19 +1,35 @@
 import * as React from "react"
 
-export type ArabicFont = "amiri" | "noto-naskh" | "scheherazade"
+export type ArabicFont =
+  | "amiri"
+  | "amiri-quran"
+  | "noto-naskh"
+  | "scheherazade"
+  | "lateef"
+  | "reem-kufi"
+  | "aref-ruqaa"
+  | "markazi"
+  | "el-messiri"
+
 export type FontSize = "sm" | "md" | "lg" | "xl"
 
-export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string }[] = [
-  { value: "amiri", label: "Amiri", family: "'Amiri', serif" },
-  { value: "noto-naskh", label: "Noto Naskh Arabic", family: "'Noto Naskh Arabic', serif" },
-  { value: "scheherazade", label: "Scheherazade", family: "'Scheherazade New', serif" },
+export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string; description: string }[] = [
+  { value: "amiri",        label: "Amiri",              family: "'Amiri', serif",             description: "Classical Naskh" },
+  { value: "amiri-quran",  label: "Amiri Quran",        family: "'Amiri Quran', serif",        description: "Quran-optimised" },
+  { value: "scheherazade", label: "Scheherazade",        family: "'Scheherazade New', serif",   description: "Traditional Naskh" },
+  { value: "noto-naskh",   label: "Noto Naskh Arabic",  family: "'Noto Naskh Arabic', serif",  description: "Clean & modern" },
+  { value: "lateef",       label: "Lateef",             family: "'Lateef', serif",             description: "Elegant Nastaliq-style" },
+  { value: "reem-kufi",    label: "Reem Kufi",          family: "'Reem Kufi', sans-serif",     description: "Geometric Kufic" },
+  { value: "aref-ruqaa",   label: "Aref Ruqaa",         family: "'Aref Ruqaa', serif",         description: "Ruqah handwriting" },
+  { value: "markazi",      label: "Markazi Text",       family: "'Markazi Text', serif",       description: "Compact & readable" },
+  { value: "el-messiri",   label: "El Messiri",         family: "'El Messiri', sans-serif",    description: "Contemporary" },
 ]
 
 export const FONT_SIZES: { value: FontSize; label: string; arabicPx: string; urduPx: string }[] = [
-  { value: "sm", label: "Small", arabicPx: "1.6rem", urduPx: "1rem" },
-  { value: "md", label: "Medium", arabicPx: "2rem", urduPx: "1.25rem" },
-  { value: "lg", label: "Large", arabicPx: "2.5rem", urduPx: "1.5rem" },
-  { value: "xl", label: "Extra Large", arabicPx: "3rem", urduPx: "1.75rem" },
+  { value: "sm", label: "Small",       arabicPx: "1.6rem", urduPx: "1rem" },
+  { value: "md", label: "Medium",      arabicPx: "2rem",   urduPx: "1.25rem" },
+  { value: "lg", label: "Large",       arabicPx: "2.5rem", urduPx: "1.5rem" },
+  { value: "xl", label: "Extra Large", arabicPx: "3rem",   urduPx: "1.75rem" },
 ]
 
 type SettingsState = {

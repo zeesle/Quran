@@ -55,7 +55,7 @@ export function SettingsPanel() {
           <Settings className="h-[1.2rem] w-[1.2rem]" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-4" align="end">
+      <PopoverContent className="w-80 p-4" align="end">
         <h3 className="font-semibold text-sm mb-3">Display Settings</h3>
 
         {/* Font Size */}
@@ -79,22 +79,26 @@ export function SettingsPanel() {
         {/* Arabic Font Style */}
         <div>
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Arabic Script</p>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-0.5">
             {ARABIC_FONTS.map((f) => (
               <button
                 key={f.value}
                 data-testid={`font-btn-${f.value}`}
                 onClick={() => setArabicFont(f.value as ArabicFont)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-md border transition-colors ${
+                className={`flex items-center justify-between px-3 py-2 rounded-md border transition-colors text-left ${
                   arabicFont === f.value
                     ? "border-primary bg-primary/5 text-primary"
                     : "border-border hover:bg-muted/50 text-foreground"
                 }`}
               >
-                <span className="text-sm">{f.label}</span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm font-medium leading-none">{f.label}</span>
+                  <span className="text-[10px] text-muted-foreground leading-none">{f.description}</span>
+                </div>
                 <span
                   style={{ fontFamily: f.family }}
-                  className="text-xl leading-none"
+                  className="text-2xl leading-none shrink-0 ml-2"
+                  dir="rtl"
                 >
                   بِسْمِ
                 </span>
