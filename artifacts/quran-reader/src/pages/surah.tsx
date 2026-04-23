@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSurahContent, useWordByWord, type VerseWithWords } from "@/hooks/use-quran";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSettings, ARABIC_FONTS, FONT_SIZES } from "@/components/settings-provider";
+import { useSettings, ARABIC_FONTS, FONT_SIZES, TRANSLATION_EDITIONS } from "@/components/settings-provider";
 import { TajweedText } from "@/components/tajweed-text";
 
 function toEasternDigits(num: number): string {
@@ -117,8 +117,8 @@ function WordByWordVerse({ verse, urduText, urduStyle, arabicFamily, arabicSize,
 export default function SurahView() {
   const { id } = useParams();
   const surahNumber = parseInt(id || "1", 10);
-  const { data: surah, isLoading, error } = useSurahContent(surahNumber);
-  const { arabicFont, fontSize } = useSettings();
+  const { arabicFont, fontSize, translationEdition } = useSettings();
+  const { data: surah, isLoading, error } = useSurahContent(surahNumber, translationEdition);
 
   const [wordByWordEnabled, setWordByWordEnabled] = useState<boolean>(
     () => localStorage.getItem("quran-wbw") === "true"
@@ -166,6 +166,8 @@ export default function SurahView() {
 
   const fontConfig = ARABIC_FONTS.find((f) => f.value === arabicFont) ?? ARABIC_FONTS[0];
   const sizeConfig = FONT_SIZES.find((s) => s.value === fontSize) ?? FONT_SIZES[1];
+  const editionConfig = TRANSLATION_EDITIONS.find((e) => e.identifier === translationEdition) ?? TRANSLATION_EDITIONS[0];
+  const isTranslationRtl = editionConfig.direction === "rtl";
 
   const arabicStyle: React.CSSProperties = {
     fontFamily: fontConfig.family,
@@ -179,9 +181,10 @@ export default function SurahView() {
     lineHeight: 2.2,
   };
 
-  const urduStyle: React.CSSProperties = {
-    fontSize: sizeConfig.urduPx,
-    lineHeight: 2.2,
+  const translationStyle: React.CSSProperties = {
+    fontSize: isTranslationRtl ? sizeConfig.urduPx : "0.95rem",
+    lineHeight: isTranslationRtl ? 2.2 : 1.8,
+    fontFamily: isTranslationRtl ? "'Noto Nastaliq Urdu', serif" : "var(--font-sans, system-ui)",
   };
 
   const prevSurah = surahNumber > 1 ? surahNumber - 1 : null;
@@ -320,7 +323,7 @@ export default function SurahView() {
                 {wbwLoading && (
                   <p className="text-center text-sm text-muted-foreground animate-pulse py-4">Loading word-by-word translations...</p>
                 )}
-                {surah.ayahs.map(({ arabic, urdu }, index) => {
+                {surah.ayahs.map(({ arabic, translation }, index) => {
                   let arabicText = arabic.text;
                   if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillahPrefix)) {
                     arabicText = arabicText.slice(bismillahPrefix.length);
@@ -331,7 +334,7 @@ export default function SurahView() {
                     <AnimatePresence key={arabic.number} mode="wait">
                       {wbwVerse && !wbwLoading ? (
                         <motion.div key="wbw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} data-testid={`ayah-${arabic.numberInSurah}`}>
-                          <WordByWordVerse verse={wbwVerse} urduText={urdu.text} urduStyle={urduStyle} arabicFamily={fontConfig.family} arabicSize={sizeConfig.arabicPx} verseNumber={arabic.numberInSurah} />
+                          <WordByWordVerse verse={wbwVerse} urduText={translation.text} urduStyle={translationStyle} arabicFamily={fontConfig.family} arabicSize={sizeConfig.arabicPx} verseNumber={arabic.numberInSurah} />
                         </motion.div>
                       ) : (
                         <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-8 border-b border-border/30 last:border-0" data-testid={`ayah-${arabic.numberInSurah}`}>
@@ -341,8 +344,8 @@ export default function SurahView() {
                               {" "}<VerseMarker n={arabic.numberInSurah} />
                             </p>
                           </div>
-                          <div dir="rtl">
-                            <p className="font-urdu text-right" style={{ ...urduStyle, color: "hsl(var(--primary))" }} dir="rtl">{urdu.text}</p>
+                          <div dir={editionConfig.direction}>
+                            <p className="leading-loose" style={{ ...translationStyle, color: "hsl(var(--primary))" }} dir={editionConfig.direction}>{translation.text}</p>
                           </div>
                         </motion.div>
                       )}
@@ -385,13 +388,20 @@ export default function SurahView() {
                   <div className="py-2 px-4 text-right" style={{ borderLeft: "1px solid hsl(var(--accent) / 0.35)", color: "hsl(var(--accent))" }}>
                     عربی
                   </div>
-                  <div className="py-2 px-4 text-right" style={{ color: "hsl(var(--primary))" }}>
-                    اردو ترجمہ
+                  <div
+                    className="py-2 px-4"
+                    dir={editionConfig.direction}
+                    style={{
+                      color: "hsl(var(--primary))",
+                      textAlign: isTranslationRtl ? "right" : "left",
+                    }}
+                  >
+                    {editionConfig.columnLabel}
                   </div>
                 </div>
 
                 {/* Ayah rows */}
-                {surah.ayahs.map(({ arabic, urdu }, index) => {
+                {surah.ayahs.map(({ arabic, translation }, index) => {
                   let arabicText = arabic.text;
                   if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillahPrefix)) {
                     arabicText = arabicText.slice(bismillahPrefix.length);
@@ -412,7 +422,7 @@ export default function SurahView() {
                       }}
                       data-testid={`ayah-${arabic.numberInSurah}`}
                     >
-                      {/* Arabic column (right in RTL) */}
+                      {/* Arabic column (right in RTL grid) */}
                       <div
                         className="p-4 md:p-5"
                         dir="rtl"
@@ -432,15 +442,18 @@ export default function SurahView() {
                         </p>
                       </div>
 
-                      {/* Urdu column (left in RTL) */}
-                      <div className="p-4 md:p-5" dir="rtl">
+                      {/* Translation column */}
+                      <div
+                        className="p-4 md:p-5"
+                        dir={editionConfig.direction}
+                      >
                         <p
-                          className="font-urdu text-right leading-loose"
-                          style={{ ...urduStyle, color: "hsl(var(--primary))" }}
-                          data-testid={`text-urdu-${arabic.numberInSurah}`}
-                          dir="rtl"
+                          className="leading-loose"
+                          style={{ ...translationStyle, color: "hsl(var(--primary))" }}
+                          data-testid={`text-translation-${arabic.numberInSurah}`}
+                          dir={editionConfig.direction}
                         >
-                          {urdu.text}
+                          {translation.text}
                         </p>
                       </div>
                     </motion.div>

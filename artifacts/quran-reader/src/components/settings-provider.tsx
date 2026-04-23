@@ -19,6 +19,35 @@ export type ArabicFont =
 
 export type FontSize = "sm" | "md" | "lg" | "xl"
 
+export interface TranslationEdition {
+  identifier: string
+  language: string
+  name: string
+  flag: string
+  direction: "rtl" | "ltr"
+  columnLabel: string   // shown in mushaf column header
+}
+
+export const TRANSLATION_EDITIONS: TranslationEdition[] = [
+  // ── Urdu ──────────────────────────────────────────────────────────────
+  { identifier: "ur.jalandhry",  language: "Urdu",       name: "Fateh Muhammad Jalandhry", flag: "🇵🇰", direction: "rtl", columnLabel: "اردو ترجمہ" },
+  { identifier: "ur.ahmedali",   language: "Urdu",       name: "Ahmed Ali",                flag: "🇵🇰", direction: "rtl", columnLabel: "اردو ترجمہ" },
+  { identifier: "ur.maududi",    language: "Urdu",       name: "Sayyid Abul Ala Mawdudi", flag: "🇵🇰", direction: "rtl", columnLabel: "اردو ترجمہ" },
+  { identifier: "ur.kanzuliman", language: "Urdu",       name: "Kanz ul Iman (Ahmad Raza Khan)", flag: "🇵🇰", direction: "rtl", columnLabel: "اردو ترجمہ" },
+  // ── English ───────────────────────────────────────────────────────────
+  { identifier: "en.sahih",      language: "English",    name: "Sahih International",      flag: "🇬🇧", direction: "ltr", columnLabel: "Translation" },
+  { identifier: "en.pickthall",  language: "English",    name: "Pickthall",                flag: "🇬🇧", direction: "ltr", columnLabel: "Translation" },
+  { identifier: "en.yusufali",   language: "English",    name: "Yusuf Ali",                flag: "🇬🇧", direction: "ltr", columnLabel: "Translation" },
+  { identifier: "en.arberry",    language: "English",    name: "Arberry",                  flag: "🇬🇧", direction: "ltr", columnLabel: "Translation" },
+  // ── Other ─────────────────────────────────────────────────────────────
+  { identifier: "fr.hamidullah", language: "French",     name: "Muhammad Hamidullah",      flag: "🇫🇷", direction: "ltr", columnLabel: "Traduction" },
+  { identifier: "tr.diyanet",    language: "Turkish",    name: "Diyanet İşleri",           flag: "🇹🇷", direction: "ltr", columnLabel: "Çeviri" },
+  { identifier: "id.indonesian", language: "Indonesian", name: "Bahasa Indonesia",         flag: "🇮🇩", direction: "ltr", columnLabel: "Terjemahan" },
+  { identifier: "ru.kuliev",     language: "Russian",    name: "Elmir Kuliev",             flag: "🇷🇺", direction: "ltr", columnLabel: "Перевод" },
+  { identifier: "bn.bengali",    language: "Bengali",    name: "Bengali",                  flag: "🇧🇩", direction: "ltr", columnLabel: "অনুবাদ" },
+  { identifier: "fa.ayati",      language: "Persian",    name: "Ayatullah Agha Mirza Mahdi Pooya", flag: "🇮🇷", direction: "rtl", columnLabel: "ترجمه" },
+]
+
 export const ARABIC_FONTS: {
   value: ArabicFont
   label: string
@@ -55,15 +84,19 @@ export const FONT_SIZES: { value: FontSize; label: string; arabicPx: string; urd
 type SettingsState = {
   arabicFont: ArabicFont
   fontSize: FontSize
+  translationEdition: string
   setArabicFont: (font: ArabicFont) => void
   setFontSize: (size: FontSize) => void
+  setTranslationEdition: (id: string) => void
 }
 
 const SettingsContext = React.createContext<SettingsState>({
   arabicFont: "amiri",
   fontSize: "md",
+  translationEdition: "ur.jalandhry",
   setArabicFont: () => null,
   setFontSize: () => null,
+  setTranslationEdition: () => null,
 })
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
@@ -72,6 +105,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   )
   const [fontSize, setFontSizeState] = React.useState<FontSize>(
     () => (localStorage.getItem("quran-font-size") as FontSize) || "md"
+  )
+  const [translationEdition, setTranslationEditionState] = React.useState<string>(
+    () => localStorage.getItem("quran-translation") || "ur.jalandhry"
   )
 
   const setArabicFont = React.useCallback((font: ArabicFont) => {
@@ -84,9 +120,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setFontSizeState(size)
   }, [])
 
+  const setTranslationEdition = React.useCallback((id: string) => {
+    localStorage.setItem("quran-translation", id)
+    setTranslationEditionState(id)
+  }, [])
+
   const value = React.useMemo(
-    () => ({ arabicFont, fontSize, setArabicFont, setFontSize }),
-    [arabicFont, fontSize, setArabicFont, setFontSize]
+    () => ({ arabicFont, fontSize, translationEdition, setArabicFont, setFontSize, setTranslationEdition }),
+    [arabicFont, fontSize, translationEdition, setArabicFont, setFontSize, setTranslationEdition]
   )
 
   return (

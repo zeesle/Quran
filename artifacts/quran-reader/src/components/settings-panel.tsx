@@ -11,6 +11,7 @@ import {
   useSettings,
   ARABIC_FONTS,
   FONT_SIZES,
+  TRANSLATION_EDITIONS,
   type ArabicFont,
   type FontSize,
 } from "./settings-provider"
@@ -40,7 +41,14 @@ function SizeButton({
 }
 
 export function SettingsPanel() {
-  const { arabicFont, fontSize, setArabicFont, setFontSize } = useSettings()
+  const { arabicFont, fontSize, translationEdition, setArabicFont, setFontSize, setTranslationEdition } = useSettings()
+
+  // Group translations by language for display
+  const translationGroups = TRANSLATION_EDITIONS.reduce<Record<string, typeof TRANSLATION_EDITIONS>>((acc, ed) => {
+    if (!acc[ed.language]) acc[ed.language] = []
+    acc[ed.language].push(ed)
+    return acc
+  }, {})
 
   return (
     <Popover>
@@ -55,7 +63,7 @@ export function SettingsPanel() {
           <Settings className="h-[1.2rem] w-[1.2rem]" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="end">
+      <PopoverContent className="w-84 p-4 max-h-[80vh] overflow-y-auto" align="end">
         <h3 className="font-semibold text-sm mb-3">Display Settings</h3>
 
         {/* Font Size */}
@@ -70,6 +78,41 @@ export function SettingsPanel() {
               >
                 {s.label}
               </SizeButton>
+            ))}
+          </div>
+        </div>
+
+        <Separator className="my-3" />
+
+        {/* Translation */}
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Translation</p>
+          <div className="flex flex-col gap-2">
+            {Object.entries(translationGroups).map(([language, editions]) => (
+              <div key={language}>
+                <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest mb-1 ml-0.5">
+                  {editions[0].flag} {language}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {editions.map((ed) => (
+                    <button
+                      key={ed.identifier}
+                      onClick={() => setTranslationEdition(ed.identifier)}
+                      data-testid={`translation-btn-${ed.identifier}`}
+                      className={`flex items-center justify-between px-3 py-1.5 rounded-md border text-left text-sm transition-colors ${
+                        translationEdition === ed.identifier
+                          ? "border-primary bg-primary/5 text-primary font-medium"
+                          : "border-border hover:bg-muted/50 text-foreground"
+                      }`}
+                    >
+                      <span>{ed.name}</span>
+                      {translationEdition === ed.identifier && (
+                        <span className="text-primary text-xs">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>

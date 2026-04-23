@@ -30,7 +30,7 @@ export interface SurahContent {
   numberOfAyahs: number;
   ayahs: {
     arabic: Ayah;
-    urdu: Ayah;
+    translation: Ayah;
   }[];
 }
 
@@ -75,7 +75,7 @@ export function useSurahList() {
   return { data, isLoading, error };
 }
 
-export function useSurahContent(number: number) {
+export function useSurahContent(number: number, translationEdition = "ur.jalandhry") {
   const [data, setData] = useState<SurahContent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -86,18 +86,19 @@ export function useSurahContent(number: number) {
     async function fetchSurah() {
       try {
         setIsLoading(true);
+        setData(null);
         const res = await fetch(
-          `https://api.alquran.cloud/v1/surah/${number}/editions/quran-uthmani,ur.ahmedali`
+          `https://api.alquran.cloud/v1/surah/${number}/editions/quran-uthmani,${translationEdition}`
         );
         if (!res.ok) throw new Error("Failed to fetch Surah content");
         const json = await res.json();
 
         const arabicEdition = json.data[0];
-        const urduEdition = json.data[1];
+        const translationEditionData = json.data[1];
 
         const combinedAyahs = arabicEdition.ayahs.map((ayah: Ayah, index: number) => ({
           arabic: ayah,
-          urdu: urduEdition.ayahs[index],
+          translation: translationEditionData.ayahs[index],
         }));
 
         setData({
@@ -116,7 +117,7 @@ export function useSurahContent(number: number) {
       }
     }
     fetchSurah();
-  }, [number]);
+  }, [number, translationEdition]);
 
   return { data, isLoading, error };
 }
