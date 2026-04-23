@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { ChevronLeft, ChevronRight, AlignLeft, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -143,6 +143,25 @@ export default function SurahView() {
     });
   }, []);
 
+  // Collapse sub-header on scroll-down, reveal on scroll-up
+  const [subHeaderHidden, setSubHeaderHidden] = useState(false);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 80) {
+        setSubHeaderHidden(false);
+      } else if (currentY > lastScrollY.current + 4) {
+        setSubHeaderHidden(true);
+      } else if (currentY < lastScrollY.current - 4) {
+        setSubHeaderHidden(false);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const { data: wbwData, isLoading: wbwLoading } = useWordByWord(surahNumber, wordByWordEnabled);
 
   const fontConfig = ARABIC_FONTS.find((f) => f.value === arabicFont) ?? ARABIC_FONTS[0];
@@ -183,8 +202,12 @@ export default function SurahView() {
 
   return (
     <div className="pb-24">
-      {/* Sticky Sub-Header */}
-      <div className="sticky top-16 z-40 bg-card/90 backdrop-blur border-b border-border shadow-sm">
+      {/* Sticky Sub-Header — hides on scroll-down, reappears on scroll-up */}
+      <motion.div
+        className="sticky top-16 z-40 bg-card/90 backdrop-blur border-b border-border shadow-sm"
+        animate={{ y: subHeaderHidden ? "-100%" : "0%" }}
+        transition={{ duration: 0.22, ease: "easeInOut" }}
+      >
         <div className="container mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
           {prevSurah ? (
             <Link href={`/surah/${prevSurah}`}>
@@ -236,7 +259,7 @@ export default function SurahView() {
             </Link>
           ) : <div className="w-[88px]" />}
         </div>
-      </div>
+      </motion.div>
 
       <div className="container mx-auto max-w-5xl px-4 py-8">
         {isLoading ? (
