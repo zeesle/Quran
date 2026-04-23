@@ -281,7 +281,7 @@ export default function SurahView() {
                   { label: "Idgham (no Ghunna)", color: "#169200" },
                   { label: "Iqlab",              color: "#26BFFD" },
                   { label: "Madd",               color: "#537FFF" },
-                  { label: "Silent",             color: "#AAAAAA" },
+                  { label: "Silent",             color: "#000000" },
                 ].map(({ label, color }) => (
                   <span key={label} className="flex items-center gap-1 font-medium" style={{ color }}>
                     <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />

@@ -218,8 +218,8 @@
 .tajweed-text { color: #2144C1; }
 .dark .tajweed-text { color: #6080FF; }
 
-.tajweed-text .ham_wasl { color: #AAAAAA; }
-.tajweed-text .slnt     { color: #AAAAAA; }
+.tajweed-text .ham_wasl { color: #000000; }
+.tajweed-text .slnt     { color: #000000; }
 .tajweed-text .madda_normal      { color: #537FFF; }
 .tajweed-text .madda_permissible { color: #4050FF; }
 .tajweed-text .madda_necessary   { color: #000EBC; }
@@ -243,6 +243,8 @@
 .dark .tajweed-text .ikhf_shfw { color: #FF55E8; }
 .dark .tajweed-text .ikhf      { color: #D966FF; }
 .dark .tajweed-text .idghm_shfw{ color: #88DD44; }
+.dark .tajweed-text .ham_wasl { color: #DDDDDD; }
+.dark .tajweed-text .slnt     { color: #DDDDDD; }
 .dark .tajweed-text .iqlb      { color: #55D9FF; }
 .dark .tajweed-text .idgh_ghn  { color: #33CC99; }
 .dark .tajweed-text .idgh_w_ghn{ color: #44CC44; }
