@@ -273,14 +273,15 @@ export default function SurahView() {
             {tajweedEnabled && !wordByWordEnabled && (
               <div className="mb-5 p-3 rounded-xl border border-border/50 bg-card/60 flex flex-wrap gap-x-4 gap-y-1.5 justify-center text-xs">
                 {[
-                  { cls: "ghn",         label: "Ghunna",           color: "#FF7E1E" },
-                  { cls: "qlq",         label: "Qalqalah",         color: "#DD0008" },
-                  { cls: "ikhf",        label: "Ikhfa",            color: "#9400A8" },
-                  { cls: "idgh_ghn",    label: "Idgham (Ghunna)",  color: "#169777" },
-                  { cls: "idgh_w_ghn",  label: "Idgham (no Ghunna)", color: "#169200" },
-                  { cls: "iqlb",        label: "Iqlab",            color: "#26BFFD" },
-                  { cls: "madda_obligatory", label: "Madd",        color: "#2144C1" },
-                  { cls: "slnt",        label: "Silent",           color: "#AAAAAA" },
+                  { label: "Normal",             color: "#2144C1" },
+                  { label: "Ghunna",             color: "#FF7E1E" },
+                  { label: "Qalqalah",           color: "#DD0008" },
+                  { label: "Ikhfa",              color: "#9400A8" },
+                  { label: "Idgham (Ghunna)",    color: "#169777" },
+                  { label: "Idgham (no Ghunna)", color: "#169200" },
+                  { label: "Iqlab",              color: "#26BFFD" },
+                  { label: "Madd",               color: "#537FFF" },
+                  { label: "Silent",             color: "#AAAAAA" },
                 ].map(({ label, color }) => (
                   <span key={label} className="flex items-center gap-1 font-medium" style={{ color }}>
                     <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />

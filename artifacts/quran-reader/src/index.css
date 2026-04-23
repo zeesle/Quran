@@ -214,6 +214,10 @@
 }
 
 /* ── Tajweed Color Classes (standard alquran.cloud color scheme) ── */
+/* Unclassified letters default to blue */
+.tajweed-text { color: #2144C1; }
+.dark .tajweed-text { color: #6080FF; }
+
 .tajweed-text .ham_wasl { color: #AAAAAA; }
 .tajweed-text .slnt     { color: #AAAAAA; }
 .tajweed-text .madda_normal      { color: #537FFF; }
