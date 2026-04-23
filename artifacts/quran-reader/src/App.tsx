@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SettingsProvider } from "@/components/settings-provider";
 import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
 import SurahView from "@/pages/surah";
@@ -25,6 +26,7 @@ function Router() {
 function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="quran-theme">
+      <SettingsProvider>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -33,6 +35,7 @@ function App() {
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>
+      </SettingsProvider>
     </ThemeProvider>
   );
 }

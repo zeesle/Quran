@@ -1,20 +1,42 @@
+import React from "react";
 import { useParams, Link } from "wouter";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSurahContent } from "@/hooks/use-quran";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSettings, ARABIC_FONTS, FONT_SIZES } from "@/components/settings-provider";
 
-// Helper to convert western digits to eastern arabic numerals
 function toEasternDigits(num: number): string {
-  const easternDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-  return num.toString().replace(/\d/g, d => easternDigits[parseInt(d)]);
+  const easternDigits = ["\u0660","\u0661","\u0662","\u0663","\u0664","\u0665","\u0666","\u0667","\u0668","\u0669"];
+  return num.toString().replace(/\d/g, (d) => easternDigits[parseInt(d)]);
 }
 
 export default function SurahView() {
   const { id } = useParams();
   const surahNumber = parseInt(id || "1", 10);
   const { data: surah, isLoading, error } = useSurahContent(surahNumber);
+  const { arabicFont, fontSize } = useSettings();
+
+  const fontConfig = ARABIC_FONTS.find((f) => f.value === arabicFont) ?? ARABIC_FONTS[0];
+  const sizeConfig = FONT_SIZES.find((s) => s.value === fontSize) ?? FONT_SIZES[1];
+
+  const arabicStyle: React.CSSProperties = {
+    fontFamily: fontConfig.family,
+    fontSize: sizeConfig.arabicPx,
+    lineHeight: 2.5,
+  };
+
+  const bismillahStyle: React.CSSProperties = {
+    fontFamily: fontConfig.family,
+    fontSize: `calc(${sizeConfig.arabicPx} * 1.05)`,
+    lineHeight: 2.2,
+  };
+
+  const urduStyle: React.CSSProperties = {
+    fontSize: sizeConfig.urduPx,
+    lineHeight: 2.2,
+  };
 
   const prevSurah = surahNumber > 1 ? surahNumber - 1 : null;
   const nextSurah = surahNumber < 114 ? surahNumber + 1 : null;
@@ -37,27 +59,31 @@ export default function SurahView() {
         <div className="container mx-auto max-w-3xl flex items-center justify-between px-4 py-3">
           {prevSurah ? (
             <Link href={`/surah/${prevSurah}`}>
-              <Button variant="ghost" size="sm" className="gap-1">
+              <Button variant="ghost" size="sm" className="gap-1" data-testid="button-prev-surah">
                 <ChevronLeft className="w-4 h-4" /> Prev
               </Button>
             </Link>
-          ) : <div className="w-[88px]"></div>}
-          
+          ) : (
+            <div className="w-[88px]" />
+          )}
+
           <div className="text-center">
             {isLoading ? (
               <Skeleton className="h-6 w-32 mx-auto" />
             ) : (
-              <h2 className="font-semibold text-primary">{surah?.englishName}</h2>
+              <h2 className="font-semibold text-primary" data-testid="text-surah-name">{surah?.englishName}</h2>
             )}
           </div>
 
           {nextSurah ? (
             <Link href={`/surah/${nextSurah}`}>
-              <Button variant="ghost" size="sm" className="gap-1">
+              <Button variant="ghost" size="sm" className="gap-1" data-testid="button-next-surah">
                 Next <ChevronRight className="w-4 h-4" />
               </Button>
             </Link>
-          ) : <div className="w-[88px]"></div>}
+          ) : (
+            <div className="w-[88px]" />
+          )}
         </div>
       </div>
 
@@ -78,14 +104,18 @@ export default function SurahView() {
             ))}
           </div>
         ) : surah ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             {/* Surah Header */}
             <div className="text-center py-10 mb-8 border-b border-border/50">
-              <h1 className="text-5xl md:text-6xl font-arabic text-primary mb-4 leading-normal">
+              <h1
+                className="font-arabic text-primary mb-4"
+                style={{ ...arabicStyle, fontSize: `calc(${sizeConfig.arabicPx} * 1.3)` }}
+                data-testid="text-surah-arabic-name"
+              >
                 {surah.name}
               </h1>
               <p className="text-lg text-muted-foreground">{surah.englishNameTranslation}</p>
@@ -99,50 +129,62 @@ export default function SurahView() {
               </div>
             </div>
 
-            {/* Bismillah */}
+            {/* Bismillah — shown for all surahs except Al-Tawbah (9) */}
             {surah.number !== 9 && (
               <div className="text-center py-8 mb-8">
-                <h2 className="text-4xl md:text-5xl font-arabic text-foreground leading-normal">
-                  بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                </h2>
+                <p
+                  className="font-arabic text-foreground"
+                  style={bismillahStyle}
+                  data-testid="text-bismillah"
+                >
+                  {"\u0628\u0650\u0633\u0652\u0645\u0650 \u0671\u0644\u0644\u0651\u064e\u0647\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650"}
+                </p>
               </div>
             )}
 
             {/* Ayahs */}
             <div className="space-y-12">
               {surah.ayahs.map(({ arabic, urdu }, index) => {
-                // If it's the first ayah of a surah (except Fatiha and Tawbah), 
-                // the API includes Bismillah in the first ayah's text.
-                // We should strip it if we already displayed it.
                 let arabicText = arabic.text;
-                const bismillah = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ";
-                if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillah)) {
-                  arabicText = arabicText.replace(bismillah, "");
+                const bismillahPrefix = "\u0628\u0650\u0633\u0652\u0645\u0650 \u0671\u0644\u0644\u0651\u064e\u0647\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0671\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650 ";
+                if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillahPrefix)) {
+                  arabicText = arabicText.slice(bismillahPrefix.length);
                 }
 
                 return (
-                  <motion.div 
+                  <motion.div
                     key={arabic.number}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.5 }}
                     className="relative pb-10 border-b border-border/30 last:border-0"
+                    data-testid={`ayah-${arabic.numberInSurah}`}
                   >
                     <div className="flex flex-col gap-8">
                       {/* Arabic */}
                       <div className="flex items-start gap-4 flex-row-reverse" dir="rtl">
-                        <div className="flex-shrink-0 mt-2 flex items-center justify-center w-12 h-12 rounded-full border-2 border-accent/40 bg-accent/5 text-primary relative">
+                        <div className="flex-shrink-0 mt-2 flex items-center justify-center w-12 h-12 rounded-full border-2 border-accent/40 bg-accent/5 text-primary">
                           <span className="text-lg font-arabic">{toEasternDigits(arabic.numberInSurah)}</span>
                         </div>
-                        <p className="text-3xl md:text-4xl font-arabic text-foreground leading-[2.5] text-right flex-1 pt-1">
+                        <p
+                          className="font-arabic text-foreground text-right flex-1 pt-1"
+                          style={arabicStyle}
+                          data-testid={`text-arabic-${arabic.numberInSurah}`}
+                          dir="rtl"
+                        >
                           {arabicText}
                         </p>
                       </div>
 
                       {/* Urdu */}
                       <div className="pr-16" dir="rtl">
-                        <p className="text-xl md:text-2xl font-urdu text-muted-foreground leading-[2.2] text-right">
+                        <p
+                          className="font-urdu text-muted-foreground text-right"
+                          style={urduStyle}
+                          data-testid={`text-urdu-${arabic.numberInSurah}`}
+                          dir="rtl"
+                        >
                           {urdu.text}
                         </p>
                       </div>

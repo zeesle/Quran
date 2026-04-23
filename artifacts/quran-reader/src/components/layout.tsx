@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { ThemeToggle } from "./theme-provider";
+import { SettingsPanel } from "./settings-panel";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +11,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-2xl font-bold text-primary font-arabic">القرآن</span>
             <span className="text-lg font-semibold hidden sm:inline-block tracking-wide">The Noble Quran</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <SettingsPanel />
             <ThemeToggle />
           </div>
         </div>
