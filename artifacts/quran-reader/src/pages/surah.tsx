@@ -12,6 +12,49 @@ function toEasternDigits(num: number): string {
   return num.toString().replace(/\d/g, (c) => d[parseInt(c)]);
 }
 
+// Decorative star border row
+function StarRow() {
+  return (
+    <div
+      className="text-center py-2 px-3 select-none overflow-hidden"
+      style={{ background: "hsl(var(--accent) / 0.08)", color: "hsl(var(--accent))", fontSize: "0.7rem", letterSpacing: "0.15em" }}
+      aria-hidden
+    >
+      {"✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦"}
+    </div>
+  );
+}
+
+// Inline verse-end ornament (U+06DD Arabic End of Ayah)
+function VerseMarker({ n }: { n: number }) {
+  return (
+    <span
+      className="inline-flex items-center justify-center font-arabic align-middle mx-1"
+      style={{
+        color: "hsl(var(--accent))",
+        fontSize: "1.4em",
+        lineHeight: 1,
+        position: "relative",
+        top: "-0.05em",
+      }}
+    >
+      &#x6DD;
+      <span
+        style={{
+          position: "absolute",
+          fontSize: "0.45em",
+          fontFamily: "inherit",
+          color: "hsl(var(--foreground))",
+          fontWeight: 600,
+          letterSpacing: 0,
+        }}
+      >
+        {toEasternDigits(n)}
+      </span>
+    </span>
+  );
+}
+
 interface WordBlockProps {
   arabicWord: string;
   meaning: string;
@@ -20,7 +63,6 @@ interface WordBlockProps {
 }
 
 function WordBlock({ arabicWord, meaning, arabicFamily, arabicSize }: WordBlockProps) {
-  const wordArabicSize = `calc(${arabicSize} * 0.65)`;
   return (
     <div
       className="flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border/60 bg-card hover:border-primary/40 hover:bg-accent/5 transition-colors cursor-default shadow-sm"
@@ -28,7 +70,7 @@ function WordBlock({ arabicWord, meaning, arabicFamily, arabicSize }: WordBlockP
     >
       <span
         className="text-foreground leading-relaxed"
-        style={{ fontFamily: arabicFamily, fontSize: wordArabicSize }}
+        style={{ fontFamily: arabicFamily, fontSize: `calc(${arabicSize} * 0.65)` }}
         dir="rtl"
       >
         {arabicWord}
@@ -52,42 +94,20 @@ interface WordByWordVerseProps {
 
 function WordByWordVerse({ verse, urduText, urduStyle, arabicFamily, arabicSize, verseNumber }: WordByWordVerseProps) {
   const words = verse.words.filter((w) => w.char_type_name === "word");
-
   return (
-    <div className="relative pb-10 border-b border-border/30 last:border-0">
-      {/* Ayah number badge */}
+    <div className="pb-8 border-b border-border/30 last:border-0">
       <div className="flex justify-end mb-4">
         <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-accent/40 bg-accent/5 text-primary">
           <span className="text-base font-arabic">{toEasternDigits(verseNumber)}</span>
         </div>
       </div>
-
-      {/* Word-by-word grid — RTL flow */}
-      <div
-        className="flex flex-wrap gap-x-1 gap-y-3 mb-8 pb-6 border-b border-border/20"
-        dir="rtl"
-        data-testid={`wbw-verse-${verseNumber}`}
-      >
+      <div className="flex flex-wrap gap-x-1 gap-y-3 mb-6 pb-6 border-b border-border/20" dir="rtl" data-testid={`wbw-verse-${verseNumber}`}>
         {words.map((word) => (
-          <WordBlock
-            key={word.id}
-            arabicWord={word.text_uthmani}
-            meaning={word.translation?.text ?? ""}
-            arabicFamily={arabicFamily}
-            arabicSize={arabicSize}
-          />
+          <WordBlock key={word.id} arabicWord={word.text_uthmani} meaning={word.translation?.text ?? ""} arabicFamily={arabicFamily} arabicSize={arabicSize} />
         ))}
       </div>
-
-      {/* Full Urdu translation below */}
-      <div dir="rtl" className="pr-2">
-        <p
-          className="font-urdu text-muted-foreground text-right"
-          style={urduStyle}
-          dir="rtl"
-        >
-          {urduText}
-        </p>
+      <div dir="rtl">
+        <p className="font-urdu text-right" style={{ ...urduStyle, color: "hsl(var(--primary))" }} dir="rtl">{urduText}</p>
       </div>
     </div>
   );
@@ -119,7 +139,7 @@ export default function SurahView() {
   const arabicStyle: React.CSSProperties = {
     fontFamily: fontConfig.family,
     fontSize: sizeConfig.arabicPx,
-    lineHeight: 2.5,
+    lineHeight: 2.4,
   };
 
   const bismillahStyle: React.CSSProperties = {
@@ -144,9 +164,7 @@ export default function SurahView() {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <p className="text-destructive mb-4">Failed to load Surah. Please try again.</p>
-        <Link href="/">
-          <Button variant="outline">Return Home</Button>
-        </Link>
+        <Link href="/"><Button variant="outline">Return Home</Button></Link>
       </div>
     );
   }
@@ -155,24 +173,20 @@ export default function SurahView() {
     <div className="pb-24">
       {/* Sticky Sub-Header */}
       <div className="sticky top-16 z-40 bg-card/90 backdrop-blur border-b border-border shadow-sm">
-        <div className="container mx-auto max-w-3xl flex items-center justify-between px-4 py-3">
+        <div className="container mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
           {prevSurah ? (
             <Link href={`/surah/${prevSurah}`}>
               <Button variant="ghost" size="sm" className="gap-1" data-testid="button-prev-surah">
                 <ChevronLeft className="w-4 h-4" /> Prev
               </Button>
             </Link>
-          ) : (
-            <div className="w-[88px]" />
-          )}
+          ) : <div className="w-[88px]" />}
 
           <div className="flex flex-col items-center gap-1">
             {isLoading ? (
               <Skeleton className="h-6 w-32 mx-auto" />
             ) : (
-              <h2 className="font-semibold text-primary text-sm" data-testid="text-surah-name">
-                {surah?.englishName}
-              </h2>
+              <h2 className="font-semibold text-primary text-sm" data-testid="text-surah-name">{surah?.englishName}</h2>
             )}
             <button
               onClick={toggleWordByWord}
@@ -194,154 +208,170 @@ export default function SurahView() {
                 Next <ChevronRight className="w-4 h-4" />
               </Button>
             </Link>
-          ) : (
-            <div className="w-[88px]" />
-          )}
+          ) : <div className="w-[88px]" />}
         </div>
       </div>
 
-      <div className="container mx-auto max-w-3xl px-4 py-8">
+      <div className="container mx-auto max-w-5xl px-4 py-8">
         {isLoading ? (
-          <div className="space-y-12">
-            <div className="text-center space-y-4 py-8 border-b border-border/50">
-              <Skeleton className="h-12 w-48 mx-auto" />
-              <Skeleton className="h-6 w-32 mx-auto" />
-            </div>
+          <div className="space-y-6">
+            <Skeleton className="h-12 w-48 mx-auto" />
+            <Skeleton className="h-6 w-32 mx-auto" />
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="space-y-4 pb-8 border-b border-border/30">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-5/6 ml-auto" />
-                <Skeleton className="h-6 w-full mt-6" />
-                <Skeleton className="h-6 w-4/5 ml-auto" />
+              <div key={i} className="grid grid-cols-2 gap-0 border border-border/40 rounded">
+                <Skeleton className="h-20 m-3" />
+                <Skeleton className="h-20 m-3" />
               </div>
             ))}
           </div>
         ) : surah ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+
             {/* Surah Header */}
-            <div className="text-center py-10 mb-8 border-b border-border/50">
+            <div className="text-center py-10 mb-6">
               <h1
-                className="font-arabic text-primary mb-4"
+                className="font-arabic text-primary mb-3"
                 style={{ ...arabicStyle, fontSize: `calc(${sizeConfig.arabicPx} * 1.3)` }}
                 data-testid="text-surah-arabic-name"
               >
                 {surah.name}
               </h1>
-              <p className="text-lg text-muted-foreground">{surah.englishNameTranslation}</p>
-              <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">
-                <span className="px-3 py-1 bg-accent/10 text-accent-foreground rounded-full">
-                  {surah.revelationType}
-                </span>
-                <span className="px-3 py-1 bg-accent/10 text-accent-foreground rounded-full">
-                  {surah.numberOfAyahs} Ayahs
-                </span>
+              <p className="text-base text-muted-foreground mb-1">{surah.englishName} — {surah.englishNameTranslation}</p>
+              <div className="flex items-center justify-center gap-3 mt-4 text-sm text-muted-foreground">
+                <span className="px-3 py-1 bg-accent/10 text-accent-foreground rounded-full">{surah.revelationType}</span>
+                <span className="px-3 py-1 bg-accent/10 text-accent-foreground rounded-full">{surah.numberOfAyahs} Ayahs</span>
               </div>
             </div>
 
-            {/* Bismillah */}
-            {surah.number !== 9 && (
-              <div className="text-center py-8 mb-8">
-                <p
-                  className="font-arabic text-foreground"
-                  style={bismillahStyle}
-                  data-testid="text-bismillah"
+            {/* Word-by-word mode: full-width stacked layout */}
+            {wordByWordEnabled ? (
+              <div className="space-y-8">
+                {wbwLoading && (
+                  <p className="text-center text-sm text-muted-foreground animate-pulse py-4">Loading word-by-word translations...</p>
+                )}
+                {surah.ayahs.map(({ arabic, urdu }, index) => {
+                  let arabicText = arabic.text;
+                  if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillahPrefix)) {
+                    arabicText = arabicText.slice(bismillahPrefix.length);
+                  }
+                  const wbwVerse = wbwData?.find((v) => v.verse_number === arabic.numberInSurah);
+
+                  return (
+                    <AnimatePresence key={arabic.number} mode="wait">
+                      {wbwVerse && !wbwLoading ? (
+                        <motion.div key="wbw" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} data-testid={`ayah-${arabic.numberInSurah}`}>
+                          <WordByWordVerse verse={wbwVerse} urduText={urdu.text} urduStyle={urduStyle} arabicFamily={fontConfig.family} arabicSize={sizeConfig.arabicPx} verseNumber={arabic.numberInSurah} />
+                        </motion.div>
+                      ) : (
+                        <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-8 border-b border-border/30 last:border-0" data-testid={`ayah-${arabic.numberInSurah}`}>
+                          <div dir="rtl" className="mb-4">
+                            <p className="font-arabic text-foreground text-right" style={arabicStyle} dir="rtl">
+                              {arabicText} <VerseMarker n={arabic.numberInSurah} />
+                            </p>
+                          </div>
+                          <div dir="rtl">
+                            <p className="font-urdu text-right" style={{ ...urduStyle, color: "hsl(var(--primary))" }} dir="rtl">{urdu.text}</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  );
+                })}
+              </div>
+            ) : (
+              /* ── Two-column mushaf layout ── */
+              <div
+                className="rounded-sm overflow-hidden"
+                style={{
+                  border: "3px solid hsl(var(--accent) / 0.7)",
+                  boxShadow: "0 0 0 6px hsl(var(--accent) / 0.12), 0 4px 24px hsl(var(--accent) / 0.15)",
+                }}
+              >
+                <StarRow />
+
+                {/* Bismillah — spans both columns */}
+                {surah.number !== 9 && (
+                  <div
+                    className="text-center py-5 border-b"
+                    style={{ borderColor: "hsl(var(--accent) / 0.35)", background: "hsl(var(--accent) / 0.04)" }}
+                    data-testid="text-bismillah"
+                  >
+                    <p className="font-arabic text-foreground" style={bismillahStyle}>{bismillahUnicode}</p>
+                  </div>
+                )}
+
+                {/* Column header labels */}
+                <div
+                  className="grid grid-cols-2 text-xs font-semibold tracking-widest uppercase"
+                  dir="rtl"
+                  style={{ borderBottom: "1px solid hsl(var(--accent) / 0.35)", background: "hsl(var(--accent) / 0.06)" }}
                 >
-                  {bismillahUnicode}
-                </p>
+                  <div className="py-2 px-4 text-right" style={{ borderLeft: "1px solid hsl(var(--accent) / 0.35)", color: "hsl(var(--accent))" }}>
+                    عربی
+                  </div>
+                  <div className="py-2 px-4 text-right" style={{ color: "hsl(var(--primary))" }}>
+                    اردو ترجمہ
+                  </div>
+                </div>
+
+                {/* Ayah rows */}
+                {surah.ayahs.map(({ arabic, urdu }, index) => {
+                  let arabicText = arabic.text;
+                  if (surah.number !== 1 && surah.number !== 9 && index === 0 && arabicText.startsWith(bismillahPrefix)) {
+                    arabicText = arabicText.slice(bismillahPrefix.length);
+                  }
+
+                  return (
+                    <motion.div
+                      key={arabic.number}
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true, margin: "-60px" }}
+                      transition={{ duration: 0.4 }}
+                      className="grid grid-cols-2"
+                      dir="rtl"
+                      style={{
+                        borderBottom: index < surah.ayahs.length - 1 ? "1px solid hsl(var(--accent) / 0.25)" : "none",
+                        background: index % 2 === 0 ? "transparent" : "hsl(var(--accent) / 0.025)",
+                      }}
+                      data-testid={`ayah-${arabic.numberInSurah}`}
+                    >
+                      {/* Arabic column (right in RTL) */}
+                      <div
+                        className="p-4 md:p-5"
+                        dir="rtl"
+                        style={{ borderLeft: "1px solid hsl(var(--accent) / 0.25)" }}
+                      >
+                        <p
+                          className="font-arabic text-foreground text-right leading-loose"
+                          style={arabicStyle}
+                          data-testid={`text-arabic-${arabic.numberInSurah}`}
+                          dir="rtl"
+                        >
+                          {arabicText}
+                          {" "}
+                          <VerseMarker n={arabic.numberInSurah} />
+                        </p>
+                      </div>
+
+                      {/* Urdu column (left in RTL) */}
+                      <div className="p-4 md:p-5" dir="rtl">
+                        <p
+                          className="font-urdu text-right leading-loose"
+                          style={{ ...urduStyle, color: "hsl(var(--primary))" }}
+                          data-testid={`text-urdu-${arabic.numberInSurah}`}
+                          dir="rtl"
+                        >
+                          {urdu.text}
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+
+                <StarRow />
               </div>
             )}
-
-            {/* Word-by-word loading indicator */}
-            {wordByWordEnabled && wbwLoading && (
-              <div className="text-center py-4 mb-4">
-                <p className="text-sm text-muted-foreground animate-pulse">Loading word-by-word translations...</p>
-              </div>
-            )}
-
-            {/* Ayahs */}
-            <div className="space-y-12">
-              {surah.ayahs.map(({ arabic, urdu }, index) => {
-                let arabicText = arabic.text;
-                if (
-                  surah.number !== 1 &&
-                  surah.number !== 9 &&
-                  index === 0 &&
-                  arabicText.startsWith(bismillahPrefix)
-                ) {
-                  arabicText = arabicText.slice(bismillahPrefix.length);
-                }
-
-                const wbwVerse = wbwData?.find((v) => v.verse_number === arabic.numberInSurah);
-                const showWbw = wordByWordEnabled && wbwVerse && !wbwLoading;
-
-                return (
-                  <AnimatePresence key={arabic.number} mode="wait">
-                    {showWbw ? (
-                      <motion.div
-                        key="wbw"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        data-testid={`ayah-${arabic.numberInSurah}`}
-                      >
-                        <WordByWordVerse
-                          verse={wbwVerse}
-                          urduText={urdu.text}
-                          urduStyle={urduStyle}
-                          arabicFamily={fontConfig.family}
-                          arabicSize={sizeConfig.arabicPx}
-                          verseNumber={arabic.numberInSurah}
-                        />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="normal"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, margin: "-100px" }}
-                        transition={{ duration: 0.5 }}
-                        className="relative pb-10 border-b border-border/30 last:border-0"
-                        data-testid={`ayah-${arabic.numberInSurah}`}
-                      >
-                        <div className="flex flex-col gap-8">
-                          {/* Arabic */}
-                          <div className="flex items-start gap-4 flex-row-reverse" dir="rtl">
-                            <div className="flex-shrink-0 mt-2 flex items-center justify-center w-12 h-12 rounded-full border-2 border-accent/40 bg-accent/5 text-primary">
-                              <span className="text-lg font-arabic">{toEasternDigits(arabic.numberInSurah)}</span>
-                            </div>
-                            <p
-                              className="font-arabic text-foreground text-right flex-1 pt-1"
-                              style={arabicStyle}
-                              data-testid={`text-arabic-${arabic.numberInSurah}`}
-                              dir="rtl"
-                            >
-                              {arabicText}
-                            </p>
-                          </div>
-
-                          {/* Urdu */}
-                          <div className="pr-16" dir="rtl">
-                            <p
-                              className="font-urdu text-muted-foreground text-right"
-                              style={urduStyle}
-                              data-testid={`text-urdu-${arabic.numberInSurah}`}
-                              dir="rtl"
-                            >
-                              {urdu.text}
-                            </p>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                );
-              })}
-            </div>
           </motion.div>
         ) : null}
       </div>
