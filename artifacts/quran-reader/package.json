@@ -75,6 +75,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@fontsource/noto-nastaliq-urdu": "^5.2.8",
     "tajweed-highlight": "^1.0.4"
   }
 }

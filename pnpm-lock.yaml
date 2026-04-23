@@ -401,6 +401,9 @@ importers:
 
   artifacts/quran-reader:
     dependencies:
+      '@fontsource/noto-nastaliq-urdu':
+        specifier: ^5.2.8
+        version: 5.2.8
       tajweed-highlight:
         specifier: ^1.0.4
         version: 1.0.4
@@ -767,6 +770,9 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource/noto-nastaliq-urdu@5.2.8':
+    resolution: {integrity: sha512-Bgb/sxhDEU7zm5/9R+GL5BfMSifYhwnB0kQX9fBOPhzjprqrYcDJL/mLUe7ZcZz2H0KIVWZahIzlaovUaqEhDg==}
 
   '@gerrit0/mini-shiki@3.23.0':
     resolution: {integrity: sha512-bEMORlG0cqdjVyCEuU0cDQbORWX+kYCeo0kV1lbxF5bt4r7SID2l9bqsxJEM0zndaxpOUT7riCyIVEuqq/Ynxg==}
@@ -3317,6 +3323,8 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource/noto-nastaliq-urdu@5.2.8': {}
 
   '@gerrit0/mini-shiki@3.23.0':
     dependencies:

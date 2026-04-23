@@ -13,10 +13,20 @@ export type ArabicFont =
   | "noto-nastaliq"
   | "gulzar"
   | "mirza"
+  | "alqalam"
+  | "noor-hira"
+  | "pdms"
 
 export type FontSize = "sm" | "md" | "lg" | "xl"
 
-export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string; description: string; region?: string }[] = [
+export const ARABIC_FONTS: {
+  value: ArabicFont
+  label: string
+  family: string
+  description: string
+  region?: string
+  requiresFile?: string   // filename needed in public/fonts/
+}[] = [
   { value: "amiri",        label: "Amiri",              family: "'Amiri', serif",             description: "Classical Naskh" },
   { value: "amiri-quran",  label: "Amiri Quran",        family: "'Amiri Quran', serif",        description: "Quran-optimised" },
   { value: "scheherazade", label: "Scheherazade",        family: "'Scheherazade New', serif",   description: "Traditional Naskh" },
@@ -29,6 +39,10 @@ export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string; d
   { value: "noto-nastaliq",label: "Noto Nastaliq Urdu", family: "'Noto Nastaliq Urdu', serif", description: "South Asian Nastaliq", region: "🇵🇰🇮🇳" },
   { value: "gulzar",       label: "Gulzar",             family: "'Gulzar', serif",             description: "Pakistani Nastaliq",   region: "🇵🇰🇮🇳" },
   { value: "mirza",        label: "Mirza",              family: "'Mirza', serif",              description: "Subcontinental style", region: "🇵🇰🇮🇳" },
+  // Indo-Pak Quran print fonts — require manual font file upload (see public/fonts/README.md)
+  { value: "alqalam",  label: "Al-Qalam Quran Majeed",  family: "'Al-Qalam Quran Majeed', serif",  description: "Indo-Pak madrasa print", region: "🇵🇰🇮🇳", requiresFile: "AlQalamQuranMajeed.ttf" },
+  { value: "noor-hira",label: "Noor-e-Hira",            family: "'Noor-e-Hira', serif",            description: "Pakistani print Quran",  region: "🇵🇰🇮🇳", requiresFile: "NoorHira.ttf" },
+  { value: "pdms",     label: "PDMS Saleem QuranFont",  family: "'PDMS Saleem QuranFont', serif",  description: "PDMS Indo-Pak style",    region: "🇵🇰🇮🇳", requiresFile: "PDMS_Saleem_QuranFont.ttf" },
 ]
 
 export const FONT_SIZES: { value: FontSize; label: string; arabicPx: string; urduPx: string }[] = [

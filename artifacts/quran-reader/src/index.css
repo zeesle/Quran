@@ -1,4 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;700&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Markazi+Text:wght@400;700&family=El+Messiri:wght@400;700&family=Gulzar&family=Mirza:wght@400;700&family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&family=Noto+Naskh+Arabic:wght@400;700&family=Scheherazade+New:wght@400;700&family=Lateef:wght@400;700&family=Reem+Kufi:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Markazi+Text:wght@400;700&family=El+Messiri:wght@400;700&family=Gulzar&family=Mirza:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── Indo-Pak / South Asian Quran fonts (self-hosted via /fonts/) ──
+   Download the TTF files from the links in public/fonts/README.md
+   and place them in artifacts/quran-reader/public/fonts/           */
+@font-face {
+  font-family: 'Al-Qalam Quran Majeed';
+  src: url('/fonts/AlQalamQuranMajeed.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noor-e-Hira';
+  src: url('/fonts/NoorHira.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PDMS Saleem QuranFont';
+  src: url('/fonts/PDMS_Saleem_QuranFont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Jameel Noori Nastaleeq';
+  src: url('/fonts/JameelNooriNastaleeq.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nafees Nastaleeq';
+  src: url('/fonts/NafeesNastaleeq.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";

@@ -96,15 +96,22 @@ export function SettingsPanel() {
                   className={`flex items-center justify-between px-3 py-2 rounded-md border transition-colors text-left ${
                     arabicFont === f.value
                       ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:bg-muted/50 text-foreground"
+                      : f.requiresFile
+                        ? "border-dashed border-border/70 hover:bg-muted/30 text-foreground opacity-80"
+                        : "border-border hover:bg-muted/50 text-foreground"
                   }`}
                 >
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <span className="text-sm font-medium leading-none">
                       {f.region && <span className="mr-1 text-base">{f.region}</span>}
                       {f.label}
                     </span>
                     <span className="text-[10px] text-muted-foreground leading-none">{f.description}</span>
+                    {f.requiresFile && (
+                      <span className="text-[9px] text-amber-500 font-semibold mt-0.5 leading-none">
+                        ↑ Upload {f.requiresFile}
+                      </span>
+                    )}
                   </div>
                   <span
                     style={{ fontFamily: f.family }}
