@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from "react";
 import { useParams, Link } from "wouter";
-import { ChevronLeft, ChevronRight, AlignLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlignLeft, Palette } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSurahContent, useWordByWord, type VerseWithWords } from "@/hooks/use-quran";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings, ARABIC_FONTS, FONT_SIZES } from "@/components/settings-provider";
+import { TajweedText } from "@/components/tajweed-text";
 
 function toEasternDigits(num: number): string {
   const d = ["\u0660","\u0661","\u0662","\u0663","\u0664","\u0665","\u0666","\u0667","\u0668","\u0669"];
@@ -122,11 +123,22 @@ export default function SurahView() {
   const [wordByWordEnabled, setWordByWordEnabled] = useState<boolean>(
     () => localStorage.getItem("quran-wbw") === "true"
   );
+  const [tajweedEnabled, setTajweedEnabled] = useState<boolean>(
+    () => localStorage.getItem("quran-tajweed") === "true"
+  );
 
   const toggleWordByWord = useCallback(() => {
     setWordByWordEnabled((prev) => {
       const next = !prev;
       localStorage.setItem("quran-wbw", String(next));
+      return next;
+    });
+  }, []);
+
+  const toggleTajweed = useCallback(() => {
+    setTajweedEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("quran-tajweed", String(next));
       return next;
     });
   }, []);
@@ -188,18 +200,32 @@ export default function SurahView() {
             ) : (
               <h2 className="font-semibold text-primary text-sm" data-testid="text-surah-name">{surah?.englishName}</h2>
             )}
-            <button
-              onClick={toggleWordByWord}
-              data-testid="toggle-word-by-word"
-              className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                wordByWordEnabled
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-primary"
-              }`}
-            >
-              <AlignLeft className="w-3 h-3" />
-              Word by Word
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={toggleWordByWord}
+                data-testid="toggle-word-by-word"
+                className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  wordByWordEnabled
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-transparent text-muted-foreground border-border hover:border-primary/50 hover:text-primary"
+                }`}
+              >
+                <AlignLeft className="w-3 h-3" />
+                Word by Word
+              </button>
+              <button
+                onClick={toggleTajweed}
+                data-testid="toggle-tajweed"
+                className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  tajweedEnabled
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-transparent text-muted-foreground border-border hover:border-accent/60 hover:text-accent-foreground"
+                }`}
+              >
+                <Palette className="w-3 h-3" />
+                Tajweed
+              </button>
+            </div>
           </div>
 
           {nextSurah ? (
@@ -243,6 +269,27 @@ export default function SurahView() {
               </div>
             </div>
 
+            {/* Tajweed legend */}
+            {tajweedEnabled && !wordByWordEnabled && (
+              <div className="mb-5 p-3 rounded-xl border border-border/50 bg-card/60 flex flex-wrap gap-x-4 gap-y-1.5 justify-center text-xs">
+                {[
+                  { cls: "ghn",         label: "Ghunna",           color: "#FF7E1E" },
+                  { cls: "qlq",         label: "Qalqalah",         color: "#DD0008" },
+                  { cls: "ikhf",        label: "Ikhfa",            color: "#9400A8" },
+                  { cls: "idgh_ghn",    label: "Idgham (Ghunna)",  color: "#169777" },
+                  { cls: "idgh_w_ghn",  label: "Idgham (no Ghunna)", color: "#169200" },
+                  { cls: "iqlb",        label: "Iqlab",            color: "#26BFFD" },
+                  { cls: "madda_obligatory", label: "Madd",        color: "#2144C1" },
+                  { cls: "slnt",        label: "Silent",           color: "#AAAAAA" },
+                ].map(({ label, color }) => (
+                  <span key={label} className="flex items-center gap-1 font-medium" style={{ color }}>
+                    <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* Word-by-word mode: full-width stacked layout */}
             {wordByWordEnabled ? (
               <div className="space-y-8">
@@ -265,8 +312,9 @@ export default function SurahView() {
                       ) : (
                         <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-8 border-b border-border/30 last:border-0" data-testid={`ayah-${arabic.numberInSurah}`}>
                           <div dir="rtl" className="mb-4">
-                            <p className="font-arabic text-foreground text-right" style={arabicStyle} dir="rtl">
-                              {arabicText} <VerseMarker n={arabic.numberInSurah} />
+                            <p className="font-arabic text-foreground text-right leading-loose" style={arabicStyle} dir="rtl">
+                              {tajweedEnabled ? <TajweedText as="span" text={arabicText} style={arabicStyle} className="text-foreground" /> : arabicText}
+                              {" "}<VerseMarker n={arabic.numberInSurah} />
                             </p>
                           </div>
                           <div dir="rtl">
@@ -296,7 +344,11 @@ export default function SurahView() {
                     style={{ borderColor: "hsl(var(--accent) / 0.35)", background: "hsl(var(--accent) / 0.04)" }}
                     data-testid="text-bismillah"
                   >
-                    <p className="font-arabic text-foreground" style={bismillahStyle}>{bismillahUnicode}</p>
+                    {tajweedEnabled ? (
+                      <TajweedText text={bismillahUnicode} style={bismillahStyle} className="text-foreground text-center" />
+                    ) : (
+                      <p className="font-arabic text-foreground text-center" style={bismillahStyle} dir="rtl">{bismillahUnicode}</p>
+                    )}
                   </div>
                 )}
 
@@ -345,10 +397,12 @@ export default function SurahView() {
                         <p
                           className="font-arabic text-foreground text-right leading-loose"
                           style={arabicStyle}
-                          data-testid={`text-arabic-${arabic.numberInSurah}`}
                           dir="rtl"
+                          data-testid={`text-arabic-${arabic.numberInSurah}`}
                         >
-                          {arabicText}
+                          {tajweedEnabled ? (
+                            <TajweedText as="span" text={arabicText} style={arabicStyle} className="text-foreground" />
+                          ) : arabicText}
                           {" "}
                           <VerseMarker n={arabic.numberInSurah} />
                         </p>
