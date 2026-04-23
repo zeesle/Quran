@@ -20,10 +20,10 @@ interface WordBlockProps {
 }
 
 function WordBlock({ arabicWord, meaning, arabicFamily, arabicSize }: WordBlockProps) {
-  const wordArabicSize = `calc(${arabicSize} * 0.62)`;
+  const wordArabicSize = `calc(${arabicSize} * 0.65)`;
   return (
     <div
-      className="flex flex-col items-center gap-1 px-2 py-2 rounded-lg hover:bg-accent/10 transition-colors cursor-default"
+      className="flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-xl border border-border/60 bg-card hover:border-primary/40 hover:bg-accent/5 transition-colors cursor-default shadow-sm"
       data-testid="word-block"
     >
       <span
@@ -33,7 +33,8 @@ function WordBlock({ arabicWord, meaning, arabicFamily, arabicSize }: WordBlockP
       >
         {arabicWord}
       </span>
-      <span className="text-[11px] text-primary/80 font-medium text-center leading-tight max-w-[80px] break-words">
+      <div className="w-full h-px bg-border/60" />
+      <span className="text-[10px] text-primary font-semibold text-center leading-tight max-w-[90px] break-words uppercase tracking-wide">
         {meaning}
       </span>
     </div>
@@ -63,7 +64,7 @@ function WordByWordVerse({ verse, urduText, urduStyle, arabicFamily, arabicSize,
 
       {/* Word-by-word grid — RTL flow */}
       <div
-        className="flex flex-wrap-reverse justify-end gap-x-1 gap-y-3 mb-8 pb-6 border-b border-border/20"
+        className="flex flex-wrap gap-x-1 gap-y-3 mb-8 pb-6 border-b border-border/20"
         dir="rtl"
         data-testid={`wbw-verse-${verseNumber}`}
       >

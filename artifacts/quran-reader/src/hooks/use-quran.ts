@@ -142,7 +142,7 @@ export function useWordByWord(surahNumber: number, enabled: boolean) {
         if (!firstRes.ok) throw new Error("Failed to fetch word-by-word data");
         const firstJson = await firstRes.json();
 
-        const totalPages: number = firstJson.meta.total_pages;
+        const totalPages: number = firstJson.pagination.total_pages;
         let allVerses: VerseWithWords[] = firstJson.verses;
 
         if (totalPages > 1) {
