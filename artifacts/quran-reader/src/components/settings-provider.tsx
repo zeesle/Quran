@@ -10,19 +10,25 @@ export type ArabicFont =
   | "aref-ruqaa"
   | "markazi"
   | "el-messiri"
+  | "noto-nastaliq"
+  | "gulzar"
+  | "mirza"
 
 export type FontSize = "sm" | "md" | "lg" | "xl"
 
-export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string; description: string }[] = [
+export const ARABIC_FONTS: { value: ArabicFont; label: string; family: string; description: string; region?: string }[] = [
   { value: "amiri",        label: "Amiri",              family: "'Amiri', serif",             description: "Classical Naskh" },
   { value: "amiri-quran",  label: "Amiri Quran",        family: "'Amiri Quran', serif",        description: "Quran-optimised" },
   { value: "scheherazade", label: "Scheherazade",        family: "'Scheherazade New', serif",   description: "Traditional Naskh" },
   { value: "noto-naskh",   label: "Noto Naskh Arabic",  family: "'Noto Naskh Arabic', serif",  description: "Clean & modern" },
-  { value: "lateef",       label: "Lateef",             family: "'Lateef', serif",             description: "Elegant Nastaliq-style" },
+  { value: "lateef",       label: "Lateef",             family: "'Lateef', serif",             description: "Elegant Naskh" },
   { value: "reem-kufi",    label: "Reem Kufi",          family: "'Reem Kufi', sans-serif",     description: "Geometric Kufic" },
   { value: "aref-ruqaa",   label: "Aref Ruqaa",         family: "'Aref Ruqaa', serif",         description: "Ruqah handwriting" },
   { value: "markazi",      label: "Markazi Text",       family: "'Markazi Text', serif",       description: "Compact & readable" },
   { value: "el-messiri",   label: "El Messiri",         family: "'El Messiri', sans-serif",    description: "Contemporary" },
+  { value: "noto-nastaliq",label: "Noto Nastaliq Urdu", family: "'Noto Nastaliq Urdu', serif", description: "South Asian Nastaliq", region: "🇵🇰🇮🇳" },
+  { value: "gulzar",       label: "Gulzar",             family: "'Gulzar', serif",             description: "Pakistani Nastaliq",   region: "🇵🇰🇮🇳" },
+  { value: "mirza",        label: "Mirza",              family: "'Mirza', serif",              description: "Subcontinental style", region: "🇵🇰🇮🇳" },
 ]
 
 export const FONT_SIZES: { value: FontSize; label: string; arabicPx: string; urduPx: string }[] = [

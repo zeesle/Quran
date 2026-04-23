@@ -79,30 +79,42 @@ export function SettingsPanel() {
         {/* Arabic Font Style */}
         <div>
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Arabic Script</p>
-          <div className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-0.5">
-            {ARABIC_FONTS.map((f) => (
-              <button
-                key={f.value}
-                data-testid={`font-btn-${f.value}`}
-                onClick={() => setArabicFont(f.value as ArabicFont)}
-                className={`flex items-center justify-between px-3 py-2 rounded-md border transition-colors text-left ${
-                  arabicFont === f.value
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border hover:bg-muted/50 text-foreground"
-                }`}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-sm font-medium leading-none">{f.label}</span>
-                  <span className="text-[10px] text-muted-foreground leading-none">{f.description}</span>
-                </div>
-                <span
-                  style={{ fontFamily: f.family }}
-                  className="text-2xl leading-none shrink-0 ml-2"
-                  dir="rtl"
+          <div className="flex flex-col gap-1 max-h-80 overflow-y-auto pr-0.5">
+            {ARABIC_FONTS.map((f, i) => (
+              <React.Fragment key={f.value}>
+                {/* Separator before South Asian group */}
+                {i > 0 && f.region && !ARABIC_FONTS[i - 1].region && (
+                  <div className="flex items-center gap-2 my-1">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest">South Asian</span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+                )}
+                <button
+                  data-testid={`font-btn-${f.value}`}
+                  onClick={() => setArabicFont(f.value as ArabicFont)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-md border transition-colors text-left ${
+                    arabicFont === f.value
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border hover:bg-muted/50 text-foreground"
+                  }`}
                 >
-                  بِسْمِ
-                </span>
-              </button>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-sm font-medium leading-none">
+                      {f.region && <span className="mr-1 text-base">{f.region}</span>}
+                      {f.label}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground leading-none">{f.description}</span>
+                  </div>
+                  <span
+                    style={{ fontFamily: f.family }}
+                    className="text-2xl leading-none shrink-0 ml-2"
+                    dir="rtl"
+                  >
+                    بِسْمِ
+                  </span>
+                </button>
+              </React.Fragment>
             ))}
           </div>
         </div>
