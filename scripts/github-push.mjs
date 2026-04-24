@@ -273,6 +273,8 @@ async function main() {
     { name: "GITHUB_TOKEN", value: (process.env.GITHUB_TOKEN || "").replace(/\s+/g, "") },
   ].filter((c) => c.value.length > 0);
 
+  console.log(`Push config: max retries = ${MAX_RETRIES}, retry delay = ${RETRY_DELAY_MS} ms`);
+
   if (candidates.length === 0) {
     const msg = "No GitHub token available. Set GH_PAT or GITHUB_TOKEN secret.";
     console.error(`ERROR: ${msg}`);
