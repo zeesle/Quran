@@ -9,6 +9,9 @@
 // This script will warn when fewer than 30 days remain, and error if already expired.
 
 import { execFileSync, spawnSync } from "child_process";
+import { writeFileSync, mkdirSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const GITHUB_REPO = "zeesle/Quran";
 const GITHUB_REMOTE_URL = `https://github.com/${GITHUB_REPO}.git`;
@@ -81,6 +84,19 @@ function gitPushWithToken(token) {
 // WARN_DAYS_BEFORE: how many days ahead to start showing the reminder.
 const WARN_DAYS_BEFORE = 30;
 
+// Path where expiry status is written so the agent can create a visible project task.
+const __dir = dirname(fileURLToPath(import.meta.url));
+const EXPIRY_STATUS_FILE = resolve(__dir, "../.local/gh-pat-expiry-status.json");
+
+function writeExpiryStatus(status) {
+  try {
+    mkdirSync(dirname(EXPIRY_STATUS_FILE), { recursive: true });
+    writeFileSync(EXPIRY_STATUS_FILE, JSON.stringify(status, null, 2) + "\n", "utf8");
+  } catch (err) {
+    console.warn(`WARNING: Could not write expiry status file: ${err.message}`);
+  }
+}
+
 function checkTokenExpiry() {
   const raw = (process.env.GH_PAT_EXPIRES || "").trim();
   if (!raw) {
@@ -104,13 +120,17 @@ function checkTokenExpiry() {
       `ERROR: GH_PAT expired on ${raw} (${Math.abs(daysRemaining)} day(s) ago). ` +
       "Create a new token at https://github.com/settings/tokens and update the GH_PAT secret."
     );
+    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
   } else if (daysRemaining <= WARN_DAYS_BEFORE) {
     console.warn(
       `WARNING: GH_PAT expires on ${raw} — only ${daysRemaining} day(s) remaining. ` +
       "Rotate it soon at https://github.com/settings/tokens and update the GH_PAT secret."
     );
+    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
   } else {
     console.log(`GH_PAT expiry: ${raw} (${daysRemaining} days remaining — no action needed).`);
+    // Clear any stale reminder file now that the token is healthy.
+    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: false, checkedAt: new Date().toISOString() });
   }
 }
 

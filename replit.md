@@ -25,3 +25,14 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Post-Merge Agent Checklist
+
+After every post-merge run, call the following from the code_execution sandbox to surface any token expiry reminders as visible project tasks:
+
+```javascript
+const { ensureExpiryTask } = await import('/home/runner/workspace/scripts/ensure-expiry-task.mjs');
+await ensureExpiryTask();
+```
+
+This is idempotent and fast when no reminder is needed. It creates a project task titled `"Rotate GitHub token by <YYYY-MM-DD>"` if `GH_PAT_EXPIRES` is ≤ 30 days away, and skips silently otherwise. Run it even when the post-merge succeeded normally.
