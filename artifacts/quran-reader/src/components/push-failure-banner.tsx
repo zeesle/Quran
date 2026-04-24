@@ -118,6 +118,17 @@ export function PushFailureBanner() {
   const showExpiryUpdate =
     expiryUpdateKey !== null && dismissedExpiry !== expiryUpdateKey;
 
+  useEffect(() => {
+    if (data === undefined) return;
+    if (dismissedExpiry !== null && expiryUpdateKey !== dismissedExpiry) {
+      try {
+        localStorage.removeItem(EXPIRY_STORAGE_KEY);
+      } catch {
+      }
+      setDismissedExpiry(null);
+    }
+  }, [data, expiryUpdateKey, dismissedExpiry]);
+
   const latestHistoryTimestamp = data?.history?.length
     ? data.history[data.history.length - 1].timestamp
     : null;
