@@ -5,6 +5,10 @@ import { getGetPushStatusQueryOptions } from "@workspace/api-client-react";
 
 const STORAGE_KEY = "dismissedSyncFailure";
 const EXPIRY_STORAGE_KEY = "dismissedExpiryUpdate";
+const FLAKY_STORAGE_KEY = "dismissedFlakyHistory";
+
+const FLAKY_HISTORY_WINDOW = 5;
+const FLAKY_HISTORY_THRESHOLD = 3;
 
 function getDismissedTimestamp(): string | null {
   try {
@@ -36,13 +40,38 @@ function setDismissedExpiryKey(key: string): void {
   }
 }
 
+function getDismissedFlakyKey(): string | null {
+  try {
+    return localStorage.getItem(FLAKY_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistDismissedFlakyKey(key: string): void {
+  try {
+    localStorage.setItem(FLAKY_STORAGE_KEY, key);
+  } catch {
+  }
+}
+
 function buildHistorySummary(
   history: Array<{ status: string }> | null | undefined
 ): string | null {
   if (!history || history.length < 2) return null;
-  const window = history.slice(-5);
+  const window = history.slice(-FLAKY_HISTORY_WINDOW);
   const failCount = window.filter((e) => e.status === "failed").length;
   if (failCount === 0) return null;
+  return `${failCount} of the last ${window.length} sync${window.length === 1 ? "" : "s"} failed`;
+}
+
+function buildFlakySummary(
+  history: Array<{ status: string }> | null | undefined
+): string | null {
+  if (!history || history.length < 2) return null;
+  const window = history.slice(-FLAKY_HISTORY_WINDOW);
+  const failCount = window.filter((e) => e.status === "failed").length;
+  if (failCount < FLAKY_HISTORY_THRESHOLD) return null;
   return `${failCount} of the last ${window.length} sync${window.length === 1 ? "" : "s"} failed`;
 }
 
@@ -52,6 +81,9 @@ export function PushFailureBanner() {
   );
   const [dismissedExpiry, setDismissedExpiry] = useState<string | null>(
     () => getDismissedExpiryKey()
+  );
+  const [dismissedFlakyKey, setDismissedFlakyKey] = useState<string | null>(
+    () => getDismissedFlakyKey()
   );
 
   const { data } = useQuery({
@@ -81,7 +113,21 @@ export function PushFailureBanner() {
   const showExpiryUpdate =
     expiryUpdateKey !== null && dismissedExpiry !== expiryUpdateKey;
 
-  if (!showFailure && !showExpiryUpdate) return null;
+  const latestHistoryTimestamp = data?.history?.length
+    ? data.history[data.history.length - 1].timestamp
+    : null;
+  const flakyKey = data?.status === "success"
+    ? (data.pushedAt ?? latestHistoryTimestamp ?? null)
+    : null;
+  const flakySummary = data?.status === "success"
+    ? buildFlakySummary(data?.history)
+    : null;
+  const showFlakyWarning =
+    flakyKey !== null &&
+    flakySummary !== null &&
+    dismissedFlakyKey !== flakyKey;
+
+  if (!showFailure && !showExpiryUpdate && !showFlakyWarning) return null;
 
   const failureKey = data?.failedAt ?? "unknown";
   const failedAt = data?.failedAt
@@ -101,6 +147,13 @@ export function PushFailureBanner() {
     if (expiryUpdateKey) {
       setDismissedExpiryKey(expiryUpdateKey);
       setDismissedExpiry(expiryUpdateKey);
+    }
+  }
+
+  function handleDismissFlaky() {
+    if (flakyKey) {
+      persistDismissedFlakyKey(flakyKey);
+      setDismissedFlakyKey(flakyKey);
     }
   }
 
@@ -124,6 +177,26 @@ export function PushFailureBanner() {
           <button
             aria-label="Dismiss"
             onClick={handleDismissFailure}
+            className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      {showFlakyWarning && !showFailure && (
+        <div
+          role="status"
+          className="w-full bg-amber-50 border-b border-amber-200 text-amber-800 px-4 py-2.5 flex items-start gap-3"
+        >
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-amber-500" />
+          <p className="flex-1 text-sm leading-snug">
+            <span className="font-semibold">Sync history has frequent failures.</span>{" "}
+            The last push succeeded, but {flakySummary?.toLowerCase()}.{" "}
+            Your GitHub token may be intermittently invalid.
+          </p>
+          <button
+            aria-label="Dismiss flaky sync warning"
+            onClick={handleDismissFlaky}
             className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
           >
             <X className="h-4 w-4" />
