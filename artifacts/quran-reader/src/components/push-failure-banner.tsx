@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getGetPushStatusQueryOptions } from "@workspace/api-client-react";
@@ -60,6 +60,16 @@ export function PushFailureBanner() {
     retry: false,
     staleTime: 30_000,
   });
+
+  useEffect(() => {
+    if (data?.status && data.status !== "failed") {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+      }
+      setDismissedKey(null);
+    }
+  }, [data?.status]);
 
   const showFailure =
     data?.status === "failed" &&
