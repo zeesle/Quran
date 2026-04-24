@@ -23,11 +23,28 @@ function setRemote(url) {
   }
 }
 
+// Returns:
+//   true  — token confirmed to have push access
+//   false — token definitively lacks access (401 / 403)
+//   null  — transient error (network failure, 5xx, etc.); caller should still attempt push
 async function testTokenAccess(token) {
-  const resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}`, {
-    headers: { Authorization: `token ${token}`, Accept: "application/vnd.github+json" },
-  });
-  if (!resp.ok) return false;
+  let resp;
+  try {
+    resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}`, {
+      headers: { Authorization: `token ${token}`, Accept: "application/vnd.github+json" },
+    });
+  } catch (err) {
+    // Network-level failure — treat as transient, not as "no access".
+    console.warn(`WARNING: GitHub API check failed with a network error (${err.message}). Will still attempt push.`);
+    return null;
+  }
+  // Explicit auth/permission rejection — skip this token.
+  if (resp.status === 401 || resp.status === 403) return false;
+  // Any other non-OK response (5xx, rate-limit, etc.) — treat as transient.
+  if (!resp.ok) {
+    console.warn(`WARNING: GitHub API check returned HTTP ${resp.status}. Will still attempt push.`);
+    return null;
+  }
   const data = await resp.json();
   // Classic PATs include a permissions object; fine-grained PATs do not.
   if (data.permissions !== undefined) {
@@ -97,6 +114,29 @@ function checkTokenExpiry() {
   }
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 10_000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function gitPushWithRetry(name, token) {
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    console.log(`Using ${name} for GitHub push (attempt ${attempt}/${MAX_RETRIES}) ...`);
+    if (gitPushWithToken(token)) {
+      console.log(`GitHub push succeeded on attempt ${attempt}/${MAX_RETRIES}.`);
+      return true;
+    }
+    console.error(`${name}: push attempt ${attempt}/${MAX_RETRIES} failed.`);
+    if (attempt < MAX_RETRIES) {
+      console.log(`Retrying in ${RETRY_DELAY_MS / 1000}s ...`);
+      await sleep(RETRY_DELAY_MS);
+    }
+  }
+  return false;
+}
+
 async function main() {
   // Prefer GH_PAT (user-supplied fine-grained PAT scoped to zeesle/Quran, Contents: write).
   // Fall back to GITHUB_TOKEN (Replit's OAuth token — works if org allows it).
@@ -118,19 +158,22 @@ async function main() {
 
   for (const { name, value } of candidates) {
     const hasAccess = await testTokenAccess(value);
-    if (!hasAccess) {
+    if (hasAccess === false) {
+      // Definitive auth/permission failure — skip this token entirely.
       console.log(`${name}: no push access to ${GITHUB_REPO}, skipping.`);
       continue;
     }
-    console.log(`Using ${name} for GitHub push ...`);
-    if (gitPushWithToken(value)) {
-      console.log("GitHub push succeeded.");
+    if (hasAccess === null) {
+      // Transient preflight failure — proceed anyway; push retries may still succeed.
+      console.log(`${name}: preflight check inconclusive (transient error), attempting push anyway ...`);
+    }
+    if (await gitPushWithRetry(name, value)) {
       return;
     }
-    console.error(`${name}: push attempt failed.`);
+    console.error(`${name}: all ${MAX_RETRIES} push attempts failed.`);
   }
 
-  console.error(`ERROR: GitHub push to ${GITHUB_REPO} failed with all available tokens.`);
+  console.error(`ERROR: GitHub push to ${GITHUB_REPO} failed with all available tokens after ${MAX_RETRIES} attempts each.`);
   process.exit(1);
 }
 
