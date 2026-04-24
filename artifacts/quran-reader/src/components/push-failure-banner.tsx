@@ -3,8 +3,27 @@ import { AlertTriangle, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getGetPushStatusQueryOptions } from "@workspace/api-client-react";
 
+const STORAGE_KEY = "dismissedSyncFailure";
+
+function getDismissedTimestamp(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setDismissedTimestamp(timestamp: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, timestamp);
+  } catch {
+  }
+}
+
 export function PushFailureBanner() {
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissedKey, setDismissedKey] = useState<string | null>(
+    () => getDismissedTimestamp()
+  );
 
   const { data } = useQuery({
     ...getGetPushStatusQueryOptions(),
@@ -13,11 +32,20 @@ export function PushFailureBanner() {
     staleTime: 30_000,
   });
 
-  if (dismissed || !data || data.status !== "failed") return null;
+  if (!data || data.status !== "failed") return null;
+
+  const failureKey = data.failedAt ?? "unknown";
+
+  if (dismissedKey === failureKey) return null;
 
   const failedAt = data.failedAt
     ? new Date(data.failedAt).toLocaleString()
     : null;
+
+  function handleDismiss() {
+    setDismissedTimestamp(failureKey);
+    setDismissedKey(failureKey);
+  }
 
   return (
     <div
@@ -33,7 +61,7 @@ export function PushFailureBanner() {
       </p>
       <button
         aria-label="Dismiss"
-        onClick={() => setDismissed(true)}
+        onClick={handleDismiss}
         className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
       >
         <X className="h-4 w-4" />
