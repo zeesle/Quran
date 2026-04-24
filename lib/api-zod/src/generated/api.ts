@@ -16,6 +16,15 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * Returns the effective retry configuration for the GitHub push script
+ * @summary GitHub push config
+ */
+export const GetPushConfigResponse = zod.object({
+  maxRetries: zod.number().int(),
+  retryDelayMs: zod.number().int(),
+});
+
+/**
  * Returns the result of the last GitHub push attempt
  * @summary GitHub push status
  */

@@ -26,6 +26,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /push-config:
+    get:
+      operationId: getPushConfig
+      tags: [sync]
+      summary: GitHub push config
+      description: Returns the effective retry configuration for the GitHub push script
+      responses:
+        "200":
+          description: Push config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PushConfig"
   /push-status:
     get:
       operationId: getPushStatus
@@ -41,6 +54,18 @@ paths:
                 $ref: "#/components/schemas/PushStatus"
 components:
   schemas:
+    PushConfig:
+      type: object
+      properties:
+        maxRetries:
+          type: integer
+          description: Maximum number of push retries per token (GH_PUSH_MAX_RETRIES)
+        retryDelayMs:
+          type: integer
+          description: Delay in milliseconds between retries (GH_PUSH_RETRY_DELAY_MS)
+      required:
+        - maxRetries
+        - retryDelayMs
     HealthStatus:
       type: object
       properties:

@@ -9,6 +9,12 @@ export interface HealthStatus {
   status: string;
 }
 
+/** Maximum number of push retries per token (GH_PUSH_MAX_RETRIES) and delay between retries (GH_PUSH_RETRY_DELAY_MS) */
+export interface PushConfig {
+  maxRetries: number;
+  retryDelayMs: number;
+}
+
 export type PushHistoryEntryStatus =
   (typeof PushHistoryEntryStatus)[keyof typeof PushHistoryEntryStatus];
 

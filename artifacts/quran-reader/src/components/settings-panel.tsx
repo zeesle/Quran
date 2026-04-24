@@ -16,6 +16,7 @@ import {
   type FontSize,
 } from "./settings-provider"
 import { SyncHistoryChart } from "./sync-history-chart"
+import { RetryConfigDisplay } from "./retry-config-display"
 
 function SizeButton({
   active,
@@ -124,6 +125,14 @@ export function SettingsPanel() {
         <div className="mb-4">
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sync History</p>
           <SyncHistoryChart />
+        </div>
+
+        <Separator className="my-3" />
+
+        {/* Retry Config */}
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Retry Settings</p>
+          <RetryConfigDisplay />
         </div>
 
         <Separator className="my-3" />
