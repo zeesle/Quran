@@ -27,6 +27,11 @@ import { fileURLToPath } from "url";
 // persisted to the flag file so sync-pat-expiry.mjs can update GH_PAT_EXPIRES.
 let _detectedTokenExpiry = null;
 
+// Set to the ISO-8601 timestamp when an auto-detected expiry differs from the
+// current GH_PAT_EXPIRES and was written to the flag file.  Surfaced in the push
+// status file so the UI can show "Token expiry auto-updated to … on …".
+let _expiryAutoUpdatedAt = null;
+
 const GITHUB_REPO = "zeesle/Quran";
 const GITHUB_REMOTE_URL = `https://github.com/${GITHUB_REPO}.git`;
 const REMOTE_NAME = "github";
@@ -299,6 +304,7 @@ async function main() {
     const current = (process.env.GH_PAT_EXPIRES || "").trim();
     if (_detectedTokenExpiry !== current) {
       console.log(`Writing auto-detected expiry ${_detectedTokenExpiry} to flag file for env-var update.`);
+      _expiryAutoUpdatedAt = new Date().toISOString();
       writeDetectedExpiry(_detectedTokenExpiry);
     } else {
       console.log(`GH_PAT_EXPIRES is already up-to-date (${current}).`);
@@ -322,7 +328,14 @@ async function main() {
     }
     lastAttemptedToken = name;
     if (await gitPushWithRetry(name, value)) {
-      writePushStatus({ status: "success", pushedAt: new Date().toISOString(), token: name });
+      writePushStatus({
+        status: "success",
+        pushedAt: new Date().toISOString(),
+        token: name,
+        ...(_expiryAutoUpdatedAt
+          ? { tokenExpiryAutoUpdatedTo: _detectedTokenExpiry, tokenExpiryAutoUpdatedAt: _expiryAutoUpdatedAt }
+          : {}),
+      });
       return;
     }
     console.error(`${name}: all ${MAX_RETRIES} push attempts failed.`);
@@ -330,7 +343,15 @@ async function main() {
 
   const failedAt = new Date().toISOString();
   console.error(`ERROR: GitHub push to ${GITHUB_REPO} failed with all available tokens after ${MAX_RETRIES} attempts each.`);
-  writePushStatus({ status: "failed", failedAt, message: `All tokens exhausted after ${MAX_RETRIES} attempts each.`, token: lastAttemptedToken });
+  writePushStatus({
+    status: "failed",
+    failedAt,
+    message: `All tokens exhausted after ${MAX_RETRIES} attempts each.`,
+    token: lastAttemptedToken,
+    ...(_expiryAutoUpdatedAt
+      ? { tokenExpiryAutoUpdatedTo: _detectedTokenExpiry, tokenExpiryAutoUpdatedAt: _expiryAutoUpdatedAt }
+      : {}),
+  });
   process.exit(1);
 }
 

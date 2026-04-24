@@ -14,4 +14,8 @@ export interface PushStatus {
   failedAt?: string | null;
   message?: string | null;
   history?: PushHistoryEntry[] | null;
+  /** The expiry date (YYYY-MM-DD) that was auto-detected and written for GH_PAT_EXPIRES during this push. */
+  tokenExpiryAutoUpdatedTo?: string | null;
+  /** ISO-8601 timestamp of when the token expiry auto-update was recorded. */
+  tokenExpiryAutoUpdatedAt?: string | null;
 }
