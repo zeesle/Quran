@@ -55,6 +55,13 @@ function persistDismissedFlakyKey(key: string): void {
   }
 }
 
+function removeDismissedFlakyKey(): void {
+  try {
+    localStorage.removeItem(FLAKY_STORAGE_KEY);
+  } catch {
+  }
+}
+
 function buildHistorySummary(
   history: Array<{ status: string }> | null | undefined
 ): string | null {
@@ -138,6 +145,15 @@ export function PushFailureBanner() {
   const flakySummary = data?.status === "success"
     ? buildFlakySummary(data?.history)
     : null;
+
+  useEffect(() => {
+    if (data === undefined) return;
+    if (data.status === "success" && flakySummary === null && dismissedFlakyKey !== null) {
+      removeDismissedFlakyKey();
+      setDismissedFlakyKey(null);
+    }
+  }, [data, flakySummary, dismissedFlakyKey]);
+
   const showFlakyWarning =
     flakyKey !== null &&
     flakySummary !== null &&
