@@ -5,18 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
-
-export type PushStatusStatus =
-  (typeof PushStatusStatus)[keyof typeof PushStatusStatus];
-
-export const PushStatusStatus = {
-  success: "success",
-  failed: "failed",
-  unknown: "unknown",
-} as const;
+import type { PushStatusStatus } from "./pushStatusStatus";
 
 export interface PushStatus {
   status: PushStatusStatus;

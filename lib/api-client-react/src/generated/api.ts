@@ -13,7 +13,7 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type { HealthStatus, PushStatus } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType } from "../custom-fetch";
@@ -92,6 +92,82 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Returns the result of the last GitHub push attempt
+ * @summary GitHub push status
+ */
+export const getGetPushStatusUrl = () => {
+  return `/api/push-status`;
+};
+
+export const getPushStatus = async (
+  options?: RequestInit,
+): Promise<PushStatus> => {
+  return customFetch<PushStatus>(getGetPushStatusUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPushStatusQueryKey = () => {
+  return [`/api/push-status`] as const;
+};
+
+export const getGetPushStatusQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPushStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPushStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPushStatusQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPushStatus>>> = ({
+    signal,
+  }) => getPushStatus({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPushStatus>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPushStatusQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPushStatus>>
+>;
+export type GetPushStatusQueryError = ErrorType<unknown>;
+
+/**
+ * @summary GitHub push status
+ */
+
+export function useGetPushStatus<
+  TData = Awaited<ReturnType<typeof getPushStatus>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPushStatus>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPushStatusQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

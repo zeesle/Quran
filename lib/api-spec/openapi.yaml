@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: sync
+    description: Sync status operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /push-status:
+    get:
+      operationId: getPushStatus
+      tags: [sync]
+      summary: GitHub push status
+      description: Returns the result of the last GitHub push attempt
+      responses:
+        "200":
+          description: Push status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PushStatus"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +48,20 @@ components:
           type: string
       required:
         - status
-
+    PushStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, failed, unknown]
+        pushedAt:
+          type: string
+          nullable: true
+        failedAt:
+          type: string
+          nullable: true
+        message:
+          type: string
+          nullable: true
+      required:
+        - status

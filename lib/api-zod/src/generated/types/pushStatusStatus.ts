@@ -5,9 +5,6 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
-}
 
 export type PushStatusStatus =
   (typeof PushStatusStatus)[keyof typeof PushStatusStatus];
@@ -17,10 +14,3 @@ export const PushStatusStatus = {
   failed: "failed",
   unknown: "unknown",
 } as const;
-
-export interface PushStatus {
-  status: PushStatusStatus;
-  pushedAt?: string | null;
-  failedAt?: string | null;
-  message?: string | null;
-}

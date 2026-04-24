@@ -14,3 +14,14 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Returns the result of the last GitHub push attempt
+ * @summary GitHub push status
+ */
+export const GetPushStatusResponse = zod.object({
+  status: zod.enum(["success", "failed", "unknown"]),
+  pushedAt: zod.string().nullish(),
+  failedAt: zod.string().nullish(),
+  message: zod.string().nullish(),
+});

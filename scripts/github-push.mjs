@@ -88,6 +88,18 @@ const WARN_DAYS_BEFORE = 30;
 const __dir = dirname(fileURLToPath(import.meta.url));
 const EXPIRY_STATUS_FILE = resolve(__dir, "../.local/gh-pat-expiry-status.json");
 
+// Path where push status is written so the UI can surface failures as a banner.
+const PUSH_STATUS_FILE = resolve(__dir, "../.local/gh-push-status.json");
+
+function writePushStatus(status) {
+  try {
+    mkdirSync(dirname(PUSH_STATUS_FILE), { recursive: true });
+    writeFileSync(PUSH_STATUS_FILE, JSON.stringify(status, null, 2) + "\n", "utf8");
+  } catch (err) {
+    console.warn(`WARNING: Could not write push status file: ${err.message}`);
+  }
+}
+
 function writeExpiryStatus(status) {
   try {
     mkdirSync(dirname(EXPIRY_STATUS_FILE), { recursive: true });
@@ -166,7 +178,9 @@ async function main() {
   ].filter((c) => c.value.length > 0);
 
   if (candidates.length === 0) {
-    console.error("ERROR: No GitHub token available. Set GH_PAT or GITHUB_TOKEN secret.");
+    const msg = "No GitHub token available. Set GH_PAT or GITHUB_TOKEN secret.";
+    console.error(`ERROR: ${msg}`);
+    writePushStatus({ status: "failed", failedAt: new Date().toISOString(), message: msg });
     process.exit(1);
   }
 
@@ -188,16 +202,20 @@ async function main() {
       console.log(`${name}: preflight check inconclusive (transient error), attempting push anyway ...`);
     }
     if (await gitPushWithRetry(name, value)) {
+      writePushStatus({ status: "success", pushedAt: new Date().toISOString(), token: name });
       return;
     }
     console.error(`${name}: all ${MAX_RETRIES} push attempts failed.`);
   }
 
+  const failedAt = new Date().toISOString();
   console.error(`ERROR: GitHub push to ${GITHUB_REPO} failed with all available tokens after ${MAX_RETRIES} attempts each.`);
+  writePushStatus({ status: "failed", failedAt, message: `All tokens exhausted after ${MAX_RETRIES} attempts each.` });
   process.exit(1);
 }
 
 main().catch((err) => {
   console.error("ERROR:", err.message);
+  writePushStatus({ status: "failed", failedAt: new Date().toISOString(), message: err.message });
   process.exit(1);
 });
