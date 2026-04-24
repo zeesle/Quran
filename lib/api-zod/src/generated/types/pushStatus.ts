@@ -18,4 +18,6 @@ export interface PushStatus {
   tokenExpiryAutoUpdatedTo?: string | null;
   /** ISO-8601 timestamp of when the token expiry auto-update was recorded. */
   tokenExpiryAutoUpdatedAt?: string | null;
+  /** ISO-8601 timestamp of when GH_PAT_EXPIRES was actually set via setEnvVars (i.e. the env var was applied, not just detected). */
+  tokenExpiryAppliedAt?: string | null;
 }

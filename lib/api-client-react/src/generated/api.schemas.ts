@@ -5,14 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-export interface HealthStatus {
-  status: string;
+export interface PushConfig {
+  /** Maximum number of push retries per token (GH_PUSH_MAX_RETRIES) */
+  maxRetries: number;
+  /** Delay in milliseconds between retries (GH_PUSH_RETRY_DELAY_MS) */
+  retryDelayMs: number;
 }
 
-/** Maximum number of push retries per token (GH_PUSH_MAX_RETRIES) and delay between retries (GH_PUSH_RETRY_DELAY_MS) */
-export interface PushConfig {
-  maxRetries: number;
-  retryDelayMs: number;
+export interface HealthStatus {
+  status: string;
 }
 
 export type PushHistoryEntryStatus =
@@ -48,4 +49,6 @@ export interface PushStatus {
   tokenExpiryAutoUpdatedTo?: string | null;
   /** ISO-8601 timestamp of when the token expiry auto-update was recorded. */
   tokenExpiryAutoUpdatedAt?: string | null;
+  /** ISO-8601 timestamp of when GH_PAT_EXPIRES was actually set via setEnvVars (i.e. the env var was applied, not just detected). */
+  tokenExpiryAppliedAt?: string | null;
 }

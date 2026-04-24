@@ -107,8 +107,13 @@ export function PushFailureBanner() {
     data?.status === "failed" &&
     dismissedKey !== (data.failedAt ?? "unknown");
 
+  const isExpiryApplied =
+    !!data?.tokenExpiryAppliedAt &&
+    (!data?.tokenExpiryAutoUpdatedAt ||
+      data.tokenExpiryAppliedAt >= data.tokenExpiryAutoUpdatedAt);
+
   const expiryUpdateKey = data?.tokenExpiryAutoUpdatedTo
-    ? `${data.tokenExpiryAutoUpdatedTo}__${data.tokenExpiryAutoUpdatedAt ?? ""}`
+    ? `${data.tokenExpiryAutoUpdatedTo}__${data.tokenExpiryAutoUpdatedAt ?? ""}__${isExpiryApplied ? "applied" : "pending"}`
     : null;
   const showExpiryUpdate =
     expiryUpdateKey !== null && dismissedExpiry !== expiryUpdateKey;
@@ -136,6 +141,9 @@ export function PushFailureBanner() {
   const historySummary = buildHistorySummary(data?.history);
   const expiryUpdatedAt = data?.tokenExpiryAutoUpdatedAt
     ? new Date(data.tokenExpiryAutoUpdatedAt).toLocaleString()
+    : null;
+  const expiryAppliedAt = data?.tokenExpiryAppliedAt
+    ? new Date(data.tokenExpiryAppliedAt).toLocaleString()
     : null;
 
   function handleDismissFailure() {
@@ -210,11 +218,22 @@ export function PushFailureBanner() {
         >
           <CheckCircle className="h-4 w-4 mt-0.5 shrink-0" />
           <p className="flex-1 text-sm leading-snug">
-            <span className="font-semibold">Token expiry auto-updated</span>{" "}
-            to{" "}
-            <span className="font-mono">{data?.tokenExpiryAutoUpdatedTo}</span>
-            {expiryUpdatedAt ? ` on ${expiryUpdatedAt}` : ""}.{" "}
-            GH_PAT_EXPIRES will be applied on the next agent run.
+            {isExpiryApplied ? (
+              <>
+                <span className="font-semibold">Token expiry applied</span>{" "}
+                — GH_PAT_EXPIRES was set to{" "}
+                <span className="font-mono">{data?.tokenExpiryAutoUpdatedTo}</span>
+                {expiryAppliedAt ? ` on ${expiryAppliedAt}` : ""}.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold">Token expiry detected</span>{" "}
+                — a new expiry of{" "}
+                <span className="font-mono">{data?.tokenExpiryAutoUpdatedTo}</span>
+                {expiryUpdatedAt ? ` was detected on ${expiryUpdatedAt}` : ""}.{" "}
+                GH_PAT_EXPIRES will be applied on the next agent run.
+              </>
+            )}
           </p>
           <button
             aria-label="Dismiss expiry update notice"

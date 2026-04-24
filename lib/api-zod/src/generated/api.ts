@@ -20,8 +20,12 @@ export const HealthCheckResponse = zod.object({
  * @summary GitHub push config
  */
 export const GetPushConfigResponse = zod.object({
-  maxRetries: zod.number().int(),
-  retryDelayMs: zod.number().int(),
+  maxRetries: zod
+    .number()
+    .describe("Maximum number of push retries per token (GH_PUSH_MAX_RETRIES)"),
+  retryDelayMs: zod
+    .number()
+    .describe("Delay in milliseconds between retries (GH_PUSH_RETRY_DELAY_MS)"),
 });
 
 /**
@@ -53,5 +57,11 @@ export const GetPushStatusResponse = zod.object({
     .nullish()
     .describe(
       "ISO-8601 timestamp of when the token expiry auto-update was recorded.",
+    ),
+  tokenExpiryAppliedAt: zod
+    .string()
+    .nullish()
+    .describe(
+      "ISO-8601 timestamp of when GH_PAT_EXPIRES was actually set via setEnvVars (i.e. the env var was applied, not just detected).",
     ),
 });

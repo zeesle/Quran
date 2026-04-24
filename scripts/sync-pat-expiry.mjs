@@ -20,13 +20,14 @@
 //
 // The script is idempotent: if GH_PAT_EXPIRES already equals the detected date it exits silently.
 
-import { readFileSync, unlinkSync } from "fs";
+import { readFileSync, writeFileSync, unlinkSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dir = dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_ROOT = resolve(__dir, "..");
 const DETECTED_EXPIRY_FILE = resolve(WORKSPACE_ROOT, ".local/gh-pat-detected-expiry.json");
+const PUSH_STATUS_FILE = resolve(WORKSPACE_ROOT, ".local/gh-push-status.json");
 
 // KV key used to signal "env-var update pending".
 const KV_PENDING_KEY = "gh-pat-detected-expiry-pending";
@@ -78,6 +79,21 @@ function removeDetectedExpiryFile() {
   try { unlinkSync(DETECTED_EXPIRY_FILE); } catch { /* already gone */ }
 }
 
+function stampPushStatusApplied(appliedAt) {
+  try {
+    let status = { status: "unknown" };
+    try {
+      const parsed = JSON.parse(readFileSync(PUSH_STATUS_FILE, "utf8"));
+      if (parsed && typeof parsed === "object") status = parsed;
+    } catch { /* file missing or malformed — fall back to minimal valid object */ }
+    if (!status.status) status.status = "unknown";
+    status.tokenExpiryAppliedAt = appliedAt;
+    writeFileSync(PUSH_STATUS_FILE, JSON.stringify(status, null, 2) + "\n", "utf8");
+  } catch (err) {
+    console.warn(`sync-pat-expiry: could not update gh-push-status.json — ${err.message}`);
+  }
+}
+
 // ── Main exported function ─────────────────────────────────────────────────────
 
 export async function syncPatExpiry() {
@@ -122,7 +138,10 @@ export async function syncPatExpiry() {
   // Running inside code_execution — update the env var directly.
   try {
     await setEnvVars({ values: { GH_PAT_EXPIRES: detectedExpiry } });
+    const appliedAt = new Date().toISOString();
     console.log(`sync-pat-expiry: GH_PAT_EXPIRES updated to ${detectedExpiry}.`);
+    // Record when the env var was actually applied so the UI can confirm it.
+    stampPushStatusApplied(appliedAt);
     // Clean up: remove flag file and KV key so we don't re-run needlessly.
     removeDetectedExpiryFile();
     await kvDelete(KV_PENDING_KEY);
