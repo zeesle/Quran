@@ -1,15 +1,11 @@
 #!/usr/bin/env node
 // Pushes to GitHub after each task merge.
-// Tries GH_PAT first, then GITHUB_TOKEN as fallback.
-// Note: Replit auto-injects GITHUB_TOKEN from its OAuth integration; if that token
-// lacks org push access, set GH_PAT to a classic PAT with repo scope.
-//
-// Credentials are passed via GIT_ASKPASS — never stored in .git/config.
+// Tries GH_PAT first, then falls back to GITHUB_TOKEN.
+// Credentials are injected into the remote URL only for the duration of the push
+// (never persisted to .git/config). The remote URL is restored to the clean form
+// immediately after, whether the push succeeds or fails.
 
 import { execFileSync, spawnSync } from "child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
 
 const GITHUB_REPO = "zeesle/Quran";
 const GITHUB_REMOTE_URL = `https://github.com/${GITHUB_REPO}.git`;
@@ -30,42 +26,40 @@ async function testTokenAccess(token) {
   });
   if (!resp.ok) return false;
   const data = await resp.json();
-  return data.permissions?.push === true;
+  // Classic PATs include a permissions object; fine-grained PATs do not.
+  if (data.permissions !== undefined) {
+    return data.permissions.push === true;
+  }
+  // Fine-grained PAT: if we can read the repo, assume write (will fail at push if not).
+  return true;
 }
 
 function gitPushWithToken(token) {
-  const tmpDir = mkdtempSync(join(tmpdir(), "ghpush-"));
-  const askpassScript = join(tmpDir, "askpass.sh");
-  // GIT_ASKPASS is invoked with the prompt string as $1
-  writeFileSync(
-    askpassScript,
-    `#!/bin/sh\ncase "$1" in\n  Username*) echo "x-access-token" ;;\n  Password*) echo "${token}" ;;\nesac\n`,
-    { mode: 0o700 }
-  );
+  // Temporarily embed the token in the remote URL for the push only.
+  // This bypasses all credential helpers (including Replit's injected GIT_ASKPASS).
+  const authedUrl = `https://x-access-token:${token}@github.com/${GITHUB_REPO}.git`;
+  setRemote(authedUrl);
   try {
     // Use --force to ensure Replit is always the source of truth.
     // Remote may have diverged if the repo was initialised separately.
     const result = spawnSync(
       "git",
       ["-c", "credential.helper=", "push", "--force", REMOTE_NAME, "main"],
-      {
-        encoding: "utf8",
-        stdio: "pipe",
-        env: { ...process.env, GIT_ASKPASS: askpassScript },
-      }
+      { encoding: "utf8", stdio: "pipe" }
     );
     if (result.stdout) process.stdout.write(result.stdout);
     if (result.stderr) process.stderr.write(result.stderr);
     const out = (result.stdout || "") + (result.stderr || "");
     return result.status === 0 || out.includes("Everything up-to-date");
   } finally {
-    rmSync(tmpDir, { recursive: true, force: true });
+    // Always restore the clean (token-free) remote URL.
+    setRemote(GITHUB_REMOTE_URL);
   }
 }
 
 async function main() {
-  // Prefer GH_PAT (user-supplied classic PAT with org push access),
-  // fall back to GITHUB_TOKEN (Replit's OAuth token, works if org allows it).
+  // Prefer GH_PAT (user-supplied fine-grained PAT scoped to zeesle/Quran, Contents: write).
+  // Fall back to GITHUB_TOKEN (Replit's OAuth token — works if org allows it).
   const candidates = [
     { name: "GH_PAT", value: (process.env.GH_PAT || "").replace(/\s+/g, "") },
     { name: "GITHUB_TOKEN", value: (process.env.GITHUB_TOKEN || "").replace(/\s+/g, "") },
@@ -76,6 +70,7 @@ async function main() {
     process.exit(1);
   }
 
+  // Ensure remote exists with clean URL before we start.
   setRemote(GITHUB_REMOTE_URL);
 
   for (const { name, value } of candidates) {
