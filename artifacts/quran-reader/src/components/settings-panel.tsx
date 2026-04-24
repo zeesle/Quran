@@ -15,6 +15,7 @@ import {
   type ArabicFont,
   type FontSize,
 } from "./settings-provider"
+import { SyncHistoryChart } from "./sync-history-chart"
 
 function SizeButton({
   active,
@@ -115,6 +116,14 @@ export function SettingsPanel() {
               </div>
             ))}
           </div>
+        </div>
+
+        <Separator className="my-3" />
+
+        {/* Sync History */}
+        <div className="mb-4">
+          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Sync History</p>
+          <SyncHistoryChart />
         </div>
 
         <Separator className="my-3" />
