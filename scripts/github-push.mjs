@@ -7,6 +7,10 @@
 //
 // Token expiry reminder: set GH_PAT_EXPIRES to the PAT's expiry date (YYYY-MM-DD).
 // This script will warn when fewer than 30 days remain, and error if already expired.
+//
+// Retry tuning (optional env vars):
+//   GH_PUSH_MAX_RETRIES    — number of push attempts per token (default: 3)
+//   GH_PUSH_RETRY_DELAY_MS — milliseconds to wait between retries  (default: 10000)
 
 import { execFileSync, spawnSync } from "child_process";
 import { writeFileSync, mkdirSync } from "fs";
@@ -146,8 +150,12 @@ function checkTokenExpiry() {
   }
 }
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 10_000;
+const _parseEnvInt = (name, defaultVal) => {
+  const n = parseInt(process.env[name] ?? "", 10);
+  return Number.isFinite(n) ? n : defaultVal;
+};
+const MAX_RETRIES = _parseEnvInt("GH_PUSH_MAX_RETRIES", 3);
+const RETRY_DELAY_MS = _parseEnvInt("GH_PUSH_RETRY_DELAY_MS", 10_000);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
