@@ -24,4 +24,13 @@ export const GetPushStatusResponse = zod.object({
   pushedAt: zod.string().nullish(),
   failedAt: zod.string().nullish(),
   message: zod.string().nullish(),
+  history: zod
+    .array(
+      zod.object({
+        status: zod.enum(["success", "failed"]),
+        timestamp: zod.string(),
+        token: zod.string().nullish(),
+      }),
+    )
+    .nullish(),
 });

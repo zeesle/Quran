@@ -20,6 +20,16 @@ function setDismissedTimestamp(timestamp: string): void {
   }
 }
 
+function buildHistorySummary(
+  history: Array<{ status: string }> | null | undefined
+): string | null {
+  if (!history || history.length < 2) return null;
+  const window = history.slice(-5);
+  const failCount = window.filter((e) => e.status === "failed").length;
+  if (failCount === 0) return null;
+  return `${failCount} of the last ${window.length} sync${window.length === 1 ? "" : "s"} failed`;
+}
+
 export function PushFailureBanner() {
   const [dismissedKey, setDismissedKey] = useState<string | null>(
     () => getDismissedTimestamp()
@@ -42,6 +52,8 @@ export function PushFailureBanner() {
     ? new Date(data.failedAt).toLocaleString()
     : null;
 
+  const historySummary = buildHistorySummary(data.history);
+
   function handleDismiss() {
     setDismissedTimestamp(failureKey);
     setDismissedKey(failureKey);
@@ -57,6 +69,9 @@ export function PushFailureBanner() {
         <span className="font-semibold">GitHub sync failed.</span>{" "}
         The last push to GitHub did not succeed
         {failedAt ? ` (${failedAt})` : ""}.{" "}
+        {historySummary && (
+          <span className="opacity-80">{historySummary}. </span>
+        )}
         Check the post-merge logs and verify your GitHub token is valid.
       </p>
       <button

@@ -14,7 +14,7 @@
 //   GH_PUSH_RETRY_DELAY_MS — milliseconds to wait between retries  (default: 10000)
 
 import { execFileSync, spawnSync } from "child_process";
-import { writeFileSync, mkdirSync } from "fs";
+import { writeFileSync, mkdirSync, readFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -126,10 +126,38 @@ const PUSH_STATUS_FILE = resolve(__dir, "../.local/gh-push-status.json");
 // can pick it up and update GH_PAT_EXPIRES via the Replit API.
 const DETECTED_EXPIRY_FILE = resolve(__dir, "../.local/gh-pat-detected-expiry.json");
 
+const PUSH_HISTORY_MAX = 10;
+
 function writePushStatus(status) {
   try {
     mkdirSync(dirname(PUSH_STATUS_FILE), { recursive: true });
-    writeFileSync(PUSH_STATUS_FILE, JSON.stringify(status, null, 2) + "\n", "utf8");
+
+    // Read existing history (if any) from the current status file.
+    let existingHistory = [];
+    try {
+      const existing = JSON.parse(readFileSync(PUSH_STATUS_FILE, "utf8"));
+      if (Array.isArray(existing.history)) {
+        existingHistory = existing.history;
+      }
+    } catch {
+      // File missing or unreadable — start fresh.
+    }
+
+    // Build a history entry for this attempt.
+    const historyEntry = {
+      status: status.status === "success" ? "success" : "failed",
+      timestamp: status.pushedAt ?? status.failedAt ?? new Date().toISOString(),
+      ...(status.token != null ? { token: status.token } : { token: null }),
+    };
+
+    // Append and trim to the last N entries.
+    const history = [...existingHistory, historyEntry].slice(-PUSH_HISTORY_MAX);
+
+    writeFileSync(
+      PUSH_STATUS_FILE,
+      JSON.stringify({ ...status, history }, null, 2) + "\n",
+      "utf8"
+    );
   } catch (err) {
     console.warn(`WARNING: Could not write push status file: ${err.message}`);
   }
@@ -278,6 +306,7 @@ async function main() {
   // Ensure remote exists with clean URL before we start.
   setRemote(GITHUB_REMOTE_URL);
 
+  let lastAttemptedToken = null;
   for (const { name, value } of candidates) {
     const hasAccess = accessResults.get(name);
     if (hasAccess === false) {
@@ -289,6 +318,7 @@ async function main() {
       // Transient preflight failure — proceed anyway; push retries may still succeed.
       console.log(`${name}: preflight check inconclusive (transient error), attempting push anyway ...`);
     }
+    lastAttemptedToken = name;
     if (await gitPushWithRetry(name, value)) {
       writePushStatus({ status: "success", pushedAt: new Date().toISOString(), token: name });
       return;
@@ -298,7 +328,7 @@ async function main() {
 
   const failedAt = new Date().toISOString();
   console.error(`ERROR: GitHub push to ${GITHUB_REPO} failed with all available tokens after ${MAX_RETRIES} attempts each.`);
-  writePushStatus({ status: "failed", failedAt, message: `All tokens exhausted after ${MAX_RETRIES} attempts each.` });
+  writePushStatus({ status: "failed", failedAt, message: `All tokens exhausted after ${MAX_RETRIES} attempts each.`, token: lastAttemptedToken });
   process.exit(1);
 }
 

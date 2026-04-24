@@ -9,6 +9,20 @@ export interface HealthStatus {
   status: string;
 }
 
+export type PushHistoryEntryStatus =
+  (typeof PushHistoryEntryStatus)[keyof typeof PushHistoryEntryStatus];
+
+export const PushHistoryEntryStatus = {
+  success: "success",
+  failed: "failed",
+} as const;
+
+export interface PushHistoryEntry {
+  status: PushHistoryEntryStatus;
+  timestamp: string;
+  token?: string | null;
+}
+
 export type PushStatusStatus =
   (typeof PushStatusStatus)[keyof typeof PushStatusStatus];
 
@@ -23,4 +37,5 @@ export interface PushStatus {
   pushedAt?: string | null;
   failedAt?: string | null;
   message?: string | null;
+  history?: PushHistoryEntry[] | null;
 }

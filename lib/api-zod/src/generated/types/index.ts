@@ -7,5 +7,7 @@
  */
 
 export * from "./healthStatus";
+export * from "./pushHistoryEntry";
+export * from "./pushHistoryEntryStatus";
 export * from "./pushStatus";
 export * from "./pushStatusStatus";

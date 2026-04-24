@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { PushHistoryEntry } from "./pushHistoryEntry";
 import type { PushStatusStatus } from "./pushStatusStatus";
 
 export interface PushStatus {
@@ -12,4 +13,5 @@ export interface PushStatus {
   pushedAt?: string | null;
   failedAt?: string | null;
   message?: string | null;
+  history?: PushHistoryEntry[] | null;
 }
