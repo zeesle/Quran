@@ -1,0 +1,253 @@
+hostinger
+
+EN
+
+Deployment failed
+Deployment from GitHub
+
+Repository: Quran
+
+Deployment settings
+Build logs
+1
+
+Scope: all 9 workspace projects
+
+2
+
+Lockfile is up to date, resolution step is skipped
+
+3
+
+Progress: resolved 1, reused 0, downloaded 0, added 0
+
+4
+
+Packages: +488
+
+5
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+6
+
+Progress: resolved 488, reused 0, downloaded 0, added 0
+
+7
+
+Progress: resolved 488, reused 0, downloaded 106, added 3
+
+8
+
+Progress: resolved 488, reused 0, downloaded 217, added 41
+
+9
+
+Progress: resolved 488, reused 0, downloaded 356, added 77
+
+10
+
+Progress: resolved 488, reused 0, downloaded 462, added 102
+
+11
+
+Progress: resolved 488, reused 0, downloaded 483, added 341
+
+12
+
+Progress: resolved 488, reused 0, downloaded 485, added 484
+
+13
+
+Progress: resolved 488, reused 0, downloaded 488, added 487
+
+14
+
+Progress: resolved 488, reused 0, downloaded 488, added 488, done
+
+15
+
+.../esbuild@0.27.3/node_modules/esbuild postinstall$ node install.js
+
+16
+
+.../esbuild@0.27.3/node_modules/esbuild postinstall: Done
+
+17
+
+
+18
+
+devDependencies:
+
+19
+
++ prettier 3.8.1
+
+20
+
++ typescript 5.9.3
+
+21
+
+
+22
+
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+
+23
+
+. preinstall: Done
+
+24
+
+Done in 15.5s using pnpm v10.33.2
+
+25
+
+
+26
+
+> workspace@0.0.0 build /home/u739868086/domains/qurantafheem.com/public_html/.builds/source/repository
+
+27
+
+> pnpm run typecheck && pnpm -r --if-present run build
+
+28
+
+
+29
+
+sh: line 1: pnpm: command not found
+
+30
+
+ ELIFECYCLE  Command failed.
+
+31
+
+ERROR: Failed to build the application
+
+
+View details
+
+
+
+
+Some websites may be temporarily unavailable. Our team is investigating and working to restore service.
+Monitor the status on our Status page
+
+
+I setup GitHub for hostinger, now how bring the repo on hostinger
+
+Kodee
+Use the Websites button I shared, then go to Add website → Import Git Repository.
+Connect your GitHub account, pick the repo, review the build/start commands, and click Deploy.
+If the repo is private, generate an SSH key in Websites → Manage → GIT, copy it, and add it to GitHub under Settings → SSH and GPG keys.
+After that, Hostinger will pull the code and deploy it to a temporary subdomain.
+
+
+
+Help Kodee improve. How was your chat with us?
+
+
+
+
+
+
+Scope: all 9 workspace projects
+
+2
+
+Lockfile is up to date, resolution step is skipped
+
+3
+
+Progress: resolved 1, reused 0, downloaded 0, added 0
+
+4
+
+Packages: +488
+
+5
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+6
+
+Progress: resolved 488, reused 0, downloaded 0, added 0
+
+7
+
+Progress: resolved 488, reused 0, downloaded 106, added 3
+
+8
+
+Progress: resolved 488, reused 0, downloaded 217, added 41
+
+9
+
+Progress: resolved 488, reused 0, downloaded 356, added 77
+
+10
+
+Progress: resolved 488, reused 0, downloaded 462, added 102
+
+11
+
+Progress: resolved 488, reused 0, downloaded 483, added 341
+
+12
+
+Progress: resolved 488, reused 0, downloaded 485, added 484
+
+13
+
+Progress: resolved 488, reused 0, downloaded 488, added 487
+
+14
+
+Progress: resolved 488, reused 0, downloaded 488, added 488, done
+
+15
+
+.../ esbuild@0.27.3 /node_modules/esbuild postinstall$ node install.js
+
+16
+
+.../ esbuild@0.27.3 /node_modules/esbuild postinstall: Done
+
+17
+
+18
+
+devDependencies:
+
+19
+
+Kodee
+That part is successful — dependencies finished installing.
+
+What I need next is the first red/error line after this, or the final few lines of the build log.
+If it stops right after devDependencies: +, the issue is usually the build command, output directory, or entry file for a workspace/monorepo setup.
+
+
+
+I think we need to update the settings like variables etc
+
+Kodee
+Yes — this usually means environment variables plus the build/start settings need to match your app.
+
+Check these in the Node.js app settings:
+
+Environment variables: add the same keys your app uses locally (.env)
+Node version
+Build command
+Start command
+Output directory / Entry file if it’s a monorepo
+If you paste:
+
+your framework (Next.js, Express, React, etc.)
+the .env variable names
+your package.json scripts
