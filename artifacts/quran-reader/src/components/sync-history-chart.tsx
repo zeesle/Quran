@@ -53,7 +53,7 @@ function HistoryDot({ entry, index }: DotProps) {
       {tooltip && (
         <div
           role="tooltip"
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-max max-w-[180px] rounded-md bg-popover text-popover-foreground border border-border shadow-md px-2.5 py-1.5 text-[11px] leading-tight pointer-events-none"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 w-max max-w-[220px] rounded-md bg-popover text-popover-foreground border border-border shadow-md px-2.5 py-1.5 text-[11px] leading-tight pointer-events-none"
         >
           <p className={`font-semibold ${isSuccess ? "text-emerald-600" : "text-destructive"}`}>
             {isSuccess ? "Success" : "Failed"}
@@ -61,6 +61,9 @@ function HistoryDot({ entry, index }: DotProps) {
           <p className="text-muted-foreground mt-0.5">{formattedTime}</p>
           {entry.token && (
             <p className="text-muted-foreground font-mono truncate">{entry.token}</p>
+          )}
+          {!isSuccess && entry.message && (
+            <p className="text-destructive/80 mt-1 break-words whitespace-normal">{entry.message}</p>
           )}
         </div>
       )}

@@ -43,6 +43,10 @@ export const GetPushStatusResponse = zod.object({
         status: zod.enum(["success", "failed"]),
         timestamp: zod.string(),
         token: zod.string().nullish(),
+        message: zod
+          .string()
+          .nullish()
+          .describe("Error message for failed attempts"),
       }),
     )
     .nullish(),

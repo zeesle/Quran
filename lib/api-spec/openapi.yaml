@@ -84,6 +84,10 @@ components:
         token:
           type: string
           nullable: true
+        message:
+          type: string
+          nullable: true
+          description: Error message for failed attempts
       required:
         - status
         - timestamp

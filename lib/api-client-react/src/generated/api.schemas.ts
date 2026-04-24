@@ -28,6 +28,8 @@ export interface PushHistoryEntry {
   status: PushHistoryEntryStatus;
   timestamp: string;
   token?: string | null;
+  /** Error message for failed attempts */
+  message?: string | null;
 }
 
 export type PushStatusStatus =

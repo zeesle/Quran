@@ -153,6 +153,7 @@ function writePushStatus(status) {
       status: status.status === "success" ? "success" : "failed",
       timestamp: status.pushedAt ?? status.failedAt ?? new Date().toISOString(),
       ...(status.token != null ? { token: status.token } : { token: null }),
+      ...(status.status !== "success" && status.message != null ? { message: status.message } : {}),
     };
 
     // Append and trim to the last N entries.
