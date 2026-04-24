@@ -4,6 +4,9 @@
 // Credentials are injected into the remote URL only for the duration of the push
 // (never persisted to .git/config). The remote URL is restored to the clean form
 // immediately after, whether the push succeeds or fails.
+//
+// Token expiry reminder: set GH_PAT_EXPIRES to the PAT's expiry date (YYYY-MM-DD).
+// This script will warn when fewer than 30 days remain, and error if already expired.
 
 import { execFileSync, spawnSync } from "child_process";
 
@@ -57,6 +60,43 @@ function gitPushWithToken(token) {
   }
 }
 
+// Warn (or error) based on GH_PAT_EXPIRES (YYYY-MM-DD).
+// WARN_DAYS_BEFORE: how many days ahead to start showing the reminder.
+const WARN_DAYS_BEFORE = 30;
+
+function checkTokenExpiry() {
+  const raw = (process.env.GH_PAT_EXPIRES || "").trim();
+  if (!raw) {
+    console.log(
+      "REMINDER: Set GH_PAT_EXPIRES (YYYY-MM-DD) so this script can warn you before the token lapses."
+    );
+    return;
+  }
+
+  const expiryMs = Date.parse(raw);
+  if (isNaN(expiryMs)) {
+    console.warn(`WARNING: GH_PAT_EXPIRES="${raw}" is not a valid date (use YYYY-MM-DD). Skipping expiry check.`);
+    return;
+  }
+
+  const nowMs = Date.now();
+  const daysRemaining = Math.ceil((expiryMs - nowMs) / (1000 * 60 * 60 * 24));
+
+  if (daysRemaining <= 0) {
+    console.error(
+      `ERROR: GH_PAT expired on ${raw} (${Math.abs(daysRemaining)} day(s) ago). ` +
+      "Create a new token at https://github.com/settings/tokens and update the GH_PAT secret."
+    );
+  } else if (daysRemaining <= WARN_DAYS_BEFORE) {
+    console.warn(
+      `WARNING: GH_PAT expires on ${raw} — only ${daysRemaining} day(s) remaining. ` +
+      "Rotate it soon at https://github.com/settings/tokens and update the GH_PAT secret."
+    );
+  } else {
+    console.log(`GH_PAT expiry: ${raw} (${daysRemaining} days remaining — no action needed).`);
+  }
+}
+
 async function main() {
   // Prefer GH_PAT (user-supplied fine-grained PAT scoped to zeesle/Quran, Contents: write).
   // Fall back to GITHUB_TOKEN (Replit's OAuth token — works if org allows it).
@@ -69,6 +109,9 @@ async function main() {
     console.error("ERROR: No GitHub token available. Set GH_PAT or GITHUB_TOKEN secret.");
     process.exit(1);
   }
+
+  // Check token expiry first so the reminder always appears, even if the push later fails.
+  checkTokenExpiry();
 
   // Ensure remote exists with clean URL before we start.
   setRemote(GITHUB_REMOTE_URL);
