@@ -43,9 +43,11 @@ function gitPushWithToken(token) {
     { mode: 0o700 }
   );
   try {
+    // Use --force to ensure Replit is always the source of truth.
+    // Remote may have diverged if the repo was initialised separately.
     const result = spawnSync(
       "git",
-      ["-c", "credential.helper=", "push", REMOTE_NAME, "main"],
+      ["-c", "credential.helper=", "push", "--force", REMOTE_NAME, "main"],
       {
         encoding: "utf8",
         stdio: "pipe",
