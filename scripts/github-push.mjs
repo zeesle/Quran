@@ -5,8 +5,9 @@
 // (never persisted to .git/config). The remote URL is restored to the clean form
 // immediately after, whether the push succeeds or fails.
 //
-// Token expiry reminder: set GH_PAT_EXPIRES to the PAT's expiry date (YYYY-MM-DD).
-// This script will warn when fewer than 30 days remain, and error if already expired.
+// Token expiry: GH_PAT_EXPIRES (YYYY-MM-DD) is auto-detected from the GitHub API
+// response header on every push and kept in sync automatically.  You only need to
+// set it manually if the API header is absent (e.g. GITHUB_TOKEN fallback path).
 //
 // Retry tuning (optional env vars):
 //   GH_PUSH_MAX_RETRIES    — number of push attempts per token (default: 3)
@@ -16,6 +17,15 @@ import { execFileSync, spawnSync } from "child_process";
 import { writeFileSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+
+// Populated by testTokenAccess() when the GitHub API response includes the
+// `github-authentication-token-expiration` header.  Only the first successful
+// response sets this value (see `!_detectedTokenExpiry` guard in testTokenAccess).
+// Because candidates are ordered GH_PAT → GITHUB_TOKEN, this effectively captures
+// the GH_PAT expiry when present, keeping it semantically aligned with the secret
+// users rotate.  Used by checkTokenExpiry() as the authoritative expiry date and
+// persisted to the flag file so sync-pat-expiry.mjs can update GH_PAT_EXPIRES.
+let _detectedTokenExpiry = null;
 
 const GITHUB_REPO = "zeesle/Quran";
 const GITHUB_REMOTE_URL = `https://github.com/${GITHUB_REPO}.git`;
@@ -52,6 +62,23 @@ async function testTokenAccess(token) {
     console.warn(`WARNING: GitHub API check returned HTTP ${resp.status}. Will still attempt push.`);
     return null;
   }
+  // Capture expiry header before consuming the body.
+  // Header format: "2025-06-15 12:00:00 UTC"  (GitHub fine-grained PATs)
+  const expiryHeader = resp.headers.get("github-authentication-token-expiration");
+  if (expiryHeader && !_detectedTokenExpiry) {
+    try {
+      // Normalise to an ISO-8601 string Node.js/V8 can parse reliably.
+      const iso = expiryHeader.trim().replace(" UTC", "Z").replace(" ", "T");
+      const d = new Date(iso);
+      if (!isNaN(d.getTime())) {
+        _detectedTokenExpiry = d.toISOString().slice(0, 10); // YYYY-MM-DD
+        console.log(`Auto-detected token expiry from GitHub API header: ${_detectedTokenExpiry}`);
+      }
+    } catch {
+      // Malformed header — ignore and fall back to GH_PAT_EXPIRES as before.
+    }
+  }
+
   const data = await resp.json();
   // Classic PATs include a permissions object; fine-grained PATs do not.
   if (data.permissions !== undefined) {
@@ -95,6 +122,10 @@ const EXPIRY_STATUS_FILE = resolve(__dir, "../.local/gh-pat-expiry-status.json")
 // Path where push status is written so the UI can surface failures as a banner.
 const PUSH_STATUS_FILE = resolve(__dir, "../.local/gh-push-status.json");
 
+// Path where the auto-detected expiry date is written so sync-pat-expiry.mjs
+// can pick it up and update GH_PAT_EXPIRES via the Replit API.
+const DETECTED_EXPIRY_FILE = resolve(__dir, "../.local/gh-pat-detected-expiry.json");
+
 function writePushStatus(status) {
   try {
     mkdirSync(dirname(PUSH_STATUS_FILE), { recursive: true });
@@ -113,18 +144,47 @@ function writeExpiryStatus(status) {
   }
 }
 
+function writeDetectedExpiry(expiry) {
+  try {
+    mkdirSync(dirname(DETECTED_EXPIRY_FILE), { recursive: true });
+    writeFileSync(
+      DETECTED_EXPIRY_FILE,
+      JSON.stringify({ detectedExpiry: expiry, detectedAt: new Date().toISOString() }, null, 2) + "\n",
+      "utf8"
+    );
+  } catch (err) {
+    console.warn(`WARNING: Could not write detected expiry file: ${err.message}`);
+  }
+}
+
 function checkTokenExpiry() {
   const raw = (process.env.GH_PAT_EXPIRES || "").trim();
+
+  // If GH_PAT_EXPIRES is missing but the API header gave us a date, use it and
+  // note that the env var will be updated automatically by sync-pat-expiry.mjs.
   if (!raw) {
-    console.log(
-      "REMINDER: Set GH_PAT_EXPIRES (YYYY-MM-DD) so this script can warn you before the token lapses."
-    );
-    return;
+    if (_detectedTokenExpiry) {
+      console.log(
+        `GH_PAT_EXPIRES not set — using auto-detected expiry from GitHub API header: ${_detectedTokenExpiry}. ` +
+        "GH_PAT_EXPIRES will be updated automatically."
+      );
+    } else {
+      console.log(
+        "REMINDER: Set GH_PAT_EXPIRES (YYYY-MM-DD) so this script can warn you before the token lapses."
+      );
+      return;
+    }
   }
 
-  const expiryMs = Date.parse(raw);
+  // Prefer the API-detected date when available: it is authoritative (comes
+  // directly from GitHub) and avoids false expiry warnings immediately after
+  // token rotation when GH_PAT_EXPIRES hasn't been synced yet.
+  const effectiveExpiry = _detectedTokenExpiry || raw;
+
+  const expiryMs = Date.parse(effectiveExpiry);
   if (isNaN(expiryMs)) {
-    console.warn(`WARNING: GH_PAT_EXPIRES="${raw}" is not a valid date (use YYYY-MM-DD). Skipping expiry check.`);
+    const source = _detectedTokenExpiry ? "auto-detected" : "GH_PAT_EXPIRES";
+    console.warn(`WARNING: ${source} expiry value "${effectiveExpiry}" is not a valid date (use YYYY-MM-DD). Skipping expiry check.`);
     return;
   }
 
@@ -133,20 +193,20 @@ function checkTokenExpiry() {
 
   if (daysRemaining <= 0) {
     console.error(
-      `ERROR: GH_PAT expired on ${raw} (${Math.abs(daysRemaining)} day(s) ago). ` +
+      `ERROR: GH_PAT expired on ${effectiveExpiry} (${Math.abs(daysRemaining)} day(s) ago). ` +
       "Create a new token at https://github.com/settings/tokens and update the GH_PAT secret."
     );
-    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
+    writeExpiryStatus({ expiresOn: effectiveExpiry, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
   } else if (daysRemaining <= WARN_DAYS_BEFORE) {
     console.warn(
-      `WARNING: GH_PAT expires on ${raw} — only ${daysRemaining} day(s) remaining. ` +
+      `WARNING: GH_PAT expires on ${effectiveExpiry} — only ${daysRemaining} day(s) remaining. ` +
       "Rotate it soon at https://github.com/settings/tokens and update the GH_PAT secret."
     );
-    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
+    writeExpiryStatus({ expiresOn: effectiveExpiry, daysRemaining, needsReminder: true, checkedAt: new Date().toISOString() });
   } else {
-    console.log(`GH_PAT expiry: ${raw} (${daysRemaining} days remaining — no action needed).`);
+    console.log(`GH_PAT expiry: ${effectiveExpiry} (${daysRemaining} days remaining — no action needed).`);
     // Clear any stale reminder file now that the token is healthy.
-    writeExpiryStatus({ expiresOn: raw, daysRemaining, needsReminder: false, checkedAt: new Date().toISOString() });
+    writeExpiryStatus({ expiresOn: effectiveExpiry, daysRemaining, needsReminder: false, checkedAt: new Date().toISOString() });
   }
 }
 
@@ -192,14 +252,34 @@ async function main() {
     process.exit(1);
   }
 
-  // Check token expiry first so the reminder always appears, even if the push later fails.
+  // Run preflight checks for all candidates up-front.
+  // This populates _detectedTokenExpiry from the API response header so that
+  // checkTokenExpiry() can use it as a fallback when GH_PAT_EXPIRES is not set.
+  const accessResults = new Map();
+  for (const { name, value } of candidates) {
+    accessResults.set(name, await testTokenAccess(value));
+  }
+
+  // Check token expiry after preflight so _detectedTokenExpiry is available.
   checkTokenExpiry();
+
+  // If we auto-detected a new expiry, persist it to the flag file so
+  // sync-pat-expiry.mjs (called from post-merge.sh) can update GH_PAT_EXPIRES.
+  if (_detectedTokenExpiry) {
+    const current = (process.env.GH_PAT_EXPIRES || "").trim();
+    if (_detectedTokenExpiry !== current) {
+      console.log(`Writing auto-detected expiry ${_detectedTokenExpiry} to flag file for env-var update.`);
+      writeDetectedExpiry(_detectedTokenExpiry);
+    } else {
+      console.log(`GH_PAT_EXPIRES is already up-to-date (${current}).`);
+    }
+  }
 
   // Ensure remote exists with clean URL before we start.
   setRemote(GITHUB_REMOTE_URL);
 
   for (const { name, value } of candidates) {
-    const hasAccess = await testTokenAccess(value);
+    const hasAccess = accessResults.get(name);
     if (hasAccess === false) {
       // Definitive auth/permission failure — skip this token entirely.
       console.log(`${name}: no push access to ${GITHUB_REPO}, skipping.`);

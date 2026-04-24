@@ -16,6 +16,20 @@ import { readFileSync, writeFileSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 
+// Lazily imported inside code_execution context only (where setEnvVars is available).
+// Syncs the auto-detected token expiry to GH_PAT_EXPIRES so it never needs to be
+// updated manually after token rotation.
+let _syncPatExpiry = null;
+async function getSyncPatExpiry() {
+  if (!_syncPatExpiry) {
+    try {
+      const mod = await import("/home/runner/workspace/scripts/sync-pat-expiry.mjs");
+      _syncPatExpiry = mod.syncPatExpiry;
+    } catch { /* ignore — script not available in this environment */ }
+  }
+  return _syncPatExpiry;
+}
+
 const __dir = dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_ROOT = resolve(__dir, "..");
 const EXPIRY_STATUS_FILE = resolve(WORKSPACE_ROOT, ".local/gh-pat-expiry-status.json");
@@ -112,7 +126,7 @@ The GitHub Personal Access Token (GH_PAT) used for automatic pushes ${urgency}. 
 ## Done looks like
 - A new PAT is created at https://github.com/settings/tokens with Contents: write scope for zeesle/Quran
 - The GH_PAT secret is updated in the Replit environment
-- GH_PAT_EXPIRES is updated to the new expiry date
+- GH_PAT_EXPIRES will be updated automatically on the next push (no manual update needed)
 
 ## Relevant files
 - \`scripts/github-push.mjs\`
@@ -126,6 +140,24 @@ The GitHub Personal Access Token (GH_PAT) used for automatic pushes ${urgency}. 
 // ── Main exported function ─────────────────────────────────────────────────────
 
 export async function ensureExpiryTask() {
+  const hasTaskAPIs =
+    typeof searchProjectTasks !== "undefined" &&
+    typeof listProjectTasks !== "undefined" &&
+    typeof bulkCreateProjectTasks !== "undefined";
+
+  // In code_execution: always sync the auto-detected expiry to GH_PAT_EXPIRES
+  // first, regardless of whether a reminder is needed.  This ensures a freshly
+  // rotated token (with many days remaining) gets its expiry recorded without
+  // waiting for the 30-day warning window to trigger.
+  if (hasTaskAPIs) {
+    try {
+      const syncFn = await getSyncPatExpiry();
+      if (syncFn) await syncFn();
+    } catch (err) {
+      console.warn(`WARNING: syncPatExpiry failed — ${err.message}`);
+    }
+  }
+
   const status = readExpiryStatus();
 
   if (!status || !status.needsReminder) {
@@ -141,11 +173,6 @@ export async function ensureExpiryTask() {
 
   const title = taskTitle(status.expiresOn);
   console.log(`Token expiry reminder needed: "${title}"`);
-
-  const hasTaskAPIs =
-    typeof searchProjectTasks !== "undefined" &&
-    typeof listProjectTasks !== "undefined" &&
-    typeof bulkCreateProjectTasks !== "undefined";
 
   if (!hasTaskAPIs) {
     // Running outside the code_execution sandbox.
