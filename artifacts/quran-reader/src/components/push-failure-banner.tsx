@@ -227,7 +227,7 @@ export function PushFailureBanner() {
               </>
             ) : (
               <>
-                <span className="font-semibold">Token expiry detected</span>{" "}
+                <span className="font-semibold">Token expiry update pending</span>{" "}
                 — a new expiry of{" "}
                 <span className="font-mono">{data?.tokenExpiryAutoUpdatedTo}</span>
                 {expiryUpdatedAt ? ` was detected on ${expiryUpdatedAt}` : ""}.{" "}
@@ -235,13 +235,15 @@ export function PushFailureBanner() {
               </>
             )}
           </p>
-          <button
-            aria-label="Dismiss expiry update notice"
-            onClick={handleDismissExpiry}
-            className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {isExpiryApplied && (
+            <button
+              aria-label="Dismiss expiry update notice"
+              onClick={handleDismissExpiry}
+              className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )}
     </>
